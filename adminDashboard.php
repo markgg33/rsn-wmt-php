@@ -112,10 +112,12 @@
                             <table class="table table-bordered text-center" id="wmtLogTable">
                                 <thead class="table-dark">
                                     <tr>
+                                        <th>Date</th>
                                         <th>Work Mode</th>
                                         <th>Task Description</th>
                                         <th>Start Time</th>
                                         <th>End Time</th>
+                                        <th>Total Time Spent</th>
                                     </tr>
                                 </thead>
                                 <tbody>
