@@ -95,12 +95,7 @@
                             <select id="taskSelector" class="form-select w-auto">
                                 <option value="">-- Select Task --</option>
                             </select>
-<<<<<<< HEAD
-
-                            <button class="btn btn-primary" onclick="startTask()">Start Now</button>
-=======
                             <button class="btn btn-primary" onclick="startTask()">Start Time</button>
->>>>>>> 5059a3263ed5d5bd9be14d33c1b072cfe49e393d
                         </div>
 
                         <br>
