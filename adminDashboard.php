@@ -68,9 +68,9 @@
                     </a>
 
                     <ul class="collapse sidebar-submenu list-unstyled ps-3" id="systemSettingsmenu">
-                        <li class="sidebar-list-item" data-page="team-setup" onclick="changePage('team-setup')">IP Restrictions</li>
-                        <li class="sidebar-list-item" data-page="value-setup" onclick="changePage('value-setup')">Value Setup</li>
-                        <li class="sidebar-list-item" data-page="announcements" onclick="changePage('announcements')">Announcements</li>
+                        <li class="sidebar-list-item" data-page="ipRestrictions" onclick="changePage('ipRestrictions')">IP Restrictions</li>
+                        <li class="sidebar-list-item" data-page="workModeCreation" onclick="changePage('workModeCreation')">Work Mode Creation</li>
+                        <li class="sidebar-list-item" data-page="billing" onclick="changePage('billing')">Billing</li>
                         <li class="sidebar-list-item" data-page="changePass" onclick="changePage('changePass')">Change Password</li>
                     </ul>
                 </li>
@@ -98,15 +98,21 @@
                         <script src="javascripts/tagTesting.js"></script>
                         <h4>Work Mode Tagging</h4>
                         <div class="d-flex align-items-center gap-2">
+                            <select id="workModeSelector" class="form-select w-auto" onchange="updateTaskOptions()">
+                                <option value="">-- Select Work Mode --</option>
+                                <option value="Web">Web</option>
+                                <option value="Ancillary">Ancillary</option>
+                                <option value="Away">Away</option>
+                                <option value="End">End</option>
+                            </select>
+
                             <select id="taskSelector" class="form-select w-auto">
                                 <option value="">-- Select Task --</option>
-                                <option value="Web - Web Content">Web - Web Content</option>
-                                <option value="Web - Client Meeting">Web - Client Meeting</option>
-                                <option value="Away Break">Away Break</option>
-                                <option value="End Shift">End Shift</option>
                             </select>
+
                             <button class="btn btn-primary" onclick="startTask()">Start Now</button>
                         </div>
+
                         <br>
                         <div class="table-responsive">
                             <table class="table table-bordered text-center" id="wmtLogTable">
