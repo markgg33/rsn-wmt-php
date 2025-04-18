@@ -42,7 +42,6 @@
                     <ul class="collapse sidebar-submenu list-unstyled ps-3" id="generalSubmenu">
                         <li class="sidebar-list-item" data-page="dashboard" onclick="changePage('dashboard')">Dashboard</li>
                         <li class="sidebar-list-item" data-page="monthlySummary" onclick="changePage('monthlySummary')">Monthly Summary</li>
-                        <li class="sidebar-list-item" data-page="commend-list" onclick="changePage('commend-list')">Commend List</li>
                     </ul>
                 </li>
 
@@ -81,24 +80,29 @@
 
                     <!-- WMT Task Tagging -->
                     <div class="card">
-                        <script src="javascripts/tagTesting.js"></script>
                         <h4>Work Mode Tagging</h4>
-                        <div class="d-flex align-items-center gap-2">
+
+                        <!-- Work Mode and Task Selection -->
+                        <div class="d-flex align-items-center gap-2 mb-3">
                             <select id="workModeSelector" class="form-select w-auto" onchange="updateTaskOptions()">
                                 <option value="">-- Select Work Mode --</option>
-                                <option value="Web">Web</option>
-                                <option value="Ancillary">Ancillary</option>
-                                <option value="Away">Away</option>
-                                <option value="End">End</option>
+                                <!-- Options will be populated dynamically -->
                             </select>
 
                             <select id="taskSelector" class="form-select w-auto">
                                 <option value="">-- Select Task --</option>
+                                <!-- Task options will be populated based on selected Work Mode -->
                             </select>
-                            <button class="btn btn-primary" onclick="startTask()">Start Time</button>
+
+                            <div id="slideButtonWrapper" class="slide-button-wrapper">
+                                <div class="slide-button-handle" id="slideButtonHandle">▶ Slide to Tag</div>
+                            </div>
+
+
+
                         </div>
 
-                        <br>
+                        <!-- Task Log Table -->
                         <div class="table-responsive">
                             <table class="table table-bordered text-center" id="wmtLogTable">
                                 <thead class="table-dark">
@@ -112,16 +116,93 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Task rows go here -->
+                                    <!-- Task rows go here dynamically -->
                                 </tbody>
                             </table>
+                            <button class="btn btn-danger mb-2" onclick="resetTaskLog()">Reset Table</button>
                         </div>
 
+                        <!-- JavaScript for logic -->
+                        <script src="javascripts/tagTesting.js"></script>
                     </div>
+
                 </div>
                 <br>
             </div>
 
+            <!-- Work Mode creation Page -->
+            <div id="workModeCreation-page" class="page-content">
+
+                <div class="main-title">
+                    <h1>WORK MODE CREATION</h1>
+                </div>
+                <br>
+
+                <form action="save_work_mode.php" method="POST" onsubmit="return confirmSaveWorkMode()">
+
+                    <div class="card p-4">
+                        <h4>Create Work Mode & Task Descriptions</h4>
+
+                        <!-- Work Mode Input -->
+                        <div class="mb-3">
+                            <label for="workModeInput" class="form-label">Work Mode Name</label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="workModeInput"
+                                name="work_mode"
+                                placeholder="e.g., Web Content"
+                                required>
+                        </div>
+
+                        <!-- Task Descriptions -->
+                        <div class="mb-3">
+                            <label class="form-label">Task Descriptions</label>
+                            <div id="taskContainer">
+                                <div class="input-group mb-2 task-input-group">
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        name="tasks[]"
+                                        placeholder="e.g., Web - Content Creation"
+                                        required>
+                                    <button
+                                        type="button"
+                                        class="btn btn-danger"
+                                        onclick="removeTaskField(this)">
+                                        Remove
+                                    </button>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                class="btn btn-secondary mt-2"
+                                onclick="addTaskField()">
+                                + Add Another Task
+                            </button>
+                            <button type="submit" class="btn btn-success mt-2 ">Save Work Mode</button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Existing Work Modes Management -->
+                <div class="card p-4 mt-4">
+                    <h4>Edit Existing Work Modes</h4>
+                    <div id="existingWorkModesList" class="list-group"></div>
+                </div>
+
+                <script src="javascripts/editWorkMode.js"></script>
+
+            </div>
+
+        </div>
+
+        <!-- LOADING OVERLAY -->
+        <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+            <div class="loading-spinner">
+                <div class="spinner-border text-light" role="status"></div>
+                <p class="mt-2 text-white">Tagging task...</p>
+            </div>
         </div>
 
     </div>
@@ -135,6 +216,15 @@
             easing: 'ease-in-out', // Smooth transition effect
         });
     </script>
+
+    <script src="javascripts/addWorkMode.js"></script>
+
+    <script>
+        function confirmSaveWorkMode() {
+            return confirm("Are you sure you want to save this Work Mode and its tasks?");
+        }
+    </script>
+
 
 </body>
 
