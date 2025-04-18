@@ -174,7 +174,7 @@
 
   .rsn-main-cards {
     display: grid;
-    grid-template-columns: 2fr 1fr; /*ADJUST ACCORDING TO THE NUMBER OF CARDS*/
+    grid-template-columns: 1fr; /*ADJUST ACCORDING TO THE NUMBER OF CARDS*/
     gap: 10px;
     margin: 20px 0;
   }
