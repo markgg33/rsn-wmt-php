@@ -46,20 +46,6 @@
                     </ul>
                 </li>
 
-                <!----TEAM COMMENDATIONS---->
-                <li>
-                    <a class="sidebar-dropdown d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#teamMenu" role="button" aria-expanded="false" aria-controls="teamMenu">
-                        <span><i class="fa-solid fa-person"></i>TEAM COMMENDATIONS</span>
-                        <i class="fa-solid fa-caret-down"></i>
-                    </a>
-
-                    <ul class="collapse sidebar-submenu list-unstyled ps-3" id="teamMenu">
-                        <li class="sidebar-list-item" data-page="individualCom" onclick="changePage('teamConsolidate')">Consolidated Commendations by Value(Team)</li>
-                        <li class="sidebar-list-item" data-page="teamCom" onclick="changePage('teamTotalCom')">Total Commendations(Team)</li>
-                    </ul>
-                </li>
-                <!----TEAM COMMENDATIONS END---->
-
                 <!----SYSTEM SETTINGS---->
                 <li>
                     <a class="sidebar-dropdown d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#systemSettingsmenu" role="button" aria-expanded="false" aria-controls="systemSettingsmenu">
@@ -105,7 +91,7 @@
                                 <option value="Away Break">Away Break</option>
                                 <option value="End Shift">End Shift</option>
                             </select>
-                            <button class="btn btn-primary" onclick="startTask()">Start Now</button>
+                            <button class="btn btn-primary" onclick="startTask()">Start Time</button>
                         </div>
                         <br>
                         <div class="table-responsive">
