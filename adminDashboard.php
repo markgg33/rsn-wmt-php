@@ -195,15 +195,49 @@
 
             </div>
 
-        </div>
+            <!-- Monthly Summary Page APRIL 21, 2025-->
 
-        <!-- LOADING OVERLAY -->
-        <div id="loadingOverlay" class="loading-overlay" style="display: none;">
-            <div class="loading-spinner">
-                <div class="spinner-border text-light" role="status"></div>
-                <p class="mt-2 text-white">Tagging task...</p>
+            <div id="monthlySummary-page" class="page-content">
+                <div class="main-title">
+                    <h1>MONTHLY SUMMARY</h1>
+                </div>
+                <br>
+                <!-- Monthly summary table -->
+                <div class="table-responsive">
+                    <table class="table table-bordered text-center" id="">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Login @</th>
+                                <th>Logout @</th>
+                                <th>Total Time</th>
+                                <th>Production Time</th>
+                                <th>Offphone Time</th>
+                                <th>Training Time</th>
+                                <th>Resono Function</th>
+                                <th>Paid Break</th>
+                                <th>Unpaid Break</th>
+                                <th>Personal Time</th>
+                                <th>System Down</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Task rows go here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
+
+    </div>
+
+
+    <!-- LOADING OVERLAY -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner">
+            <div class="spinner-border text-light" role="status"></div>
+            <p class="mt-2 text-white">Tagging task...</p>
+        </div>
+    </div>
 
     </div>
 
