@@ -1,3 +1,14 @@
+<?php
+session_start();
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_type'], ['admin', 'executive', 'hr'])) {
+    header("Location: login.php");
+    exit;
+}
+
+$userType = $_SESSION['user_type'];
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -27,9 +38,11 @@
 
             <div class="logout-container">
                 <img src="images/RESONO_logo.png" width="100px" alt="">
-                <a href="logout.php"><button class="btn-logout"><i class="fa-solid fa-power-off"></i></button></a>
+                <a href="logout.php" onclick="return confirm('Are you sure you want to log out?')"><button class="btn-logout"><i class="fa-solid fa-power-off"></i></button></a>
                 <br>
-                <p>Welcome, ADMIN ADMIN</p>
+                <p>Welcome, <?php
+                            echo isset($_SESSION['name']) ? htmlspecialchars($_SESSION['name']) : 'Guest';
+                            ?></p>
             </div>
 
             <ul class="sidebar-list" data-aos="fade-right">
@@ -42,6 +55,7 @@
                     <ul class="collapse sidebar-submenu list-unstyled ps-3" id="generalSubmenu">
                         <li class="sidebar-list-item" data-page="dashboard" onclick="changePage('dashboard')">Dashboard</li>
                         <li class="sidebar-list-item" data-page="monthlySummary" onclick="changePage('monthlySummary')">Monthly Summary</li>
+                        <li class="sidebar-list-item" data-page="calendar" onclick="changePage('calendar')">Calendar</li>
                     </ul>
                 </li>
 
@@ -54,6 +68,7 @@
 
                     <ul class="collapse sidebar-submenu list-unstyled ps-3" id="systemSettingsmenu">
                         <li class="sidebar-list-item" data-page="ipRestrictions" onclick="changePage('ipRestrictions')">IP Restrictions</li>
+                        <li class="sidebar-list-item" data-page="addUsers" onclick="changePage('addUsers')">Add Users</li>
                         <li class="sidebar-list-item" data-page="workModeCreation" onclick="changePage('workModeCreation')">Work Mode Creation</li>
                         <li class="sidebar-list-item" data-page="billing" onclick="changePage('billing')">Billing</li>
                         <li class="sidebar-list-item" data-page="changePass" onclick="changePage('changePass')">Change Password</li>
@@ -81,7 +96,6 @@
                     <!-- WMT Task Tagging -->
                     <div class="card">
                         <h4>Work Mode Tagging</h4>
-
                         <!-- Work Mode and Task Selection -->
                         <div class="d-flex align-items-center gap-2 mb-3">
                             <select id="workModeSelector" class="form-select w-auto" onchange="updateTaskOptions()">
@@ -97,9 +111,6 @@
                             <div id="slideButtonWrapper" class="slide-button-wrapper">
                                 <div class="slide-button-handle" id="slideButtonHandle">▶ Slide to Tag</div>
                             </div>
-
-
-
                         </div>
 
                         <!-- Task Log Table -->
@@ -121,13 +132,52 @@
                             </table>
                             <button class="btn btn-danger mb-2" onclick="resetTaskLog()">Reset Table</button>
                         </div>
-
                         <!-- JavaScript for logic -->
                         <script src="javascripts/tagTesting.js"></script>
                     </div>
-
                 </div>
                 <br>
+            </div>
+
+            <!--Add users Page-->
+
+            <div id="addUsers-page" class="page-content">
+                <div class="card p-4 mt-4">
+                    <h4>Add New User</h4>
+                    <form id="addUserForm">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="user_type" class="form-label">User Role</label>
+                            <select class="form-select" id="user_type" name="user_type" required>
+                                <option value="">Select Role</option>
+                                <option value="user">User</option>
+                                <option value="supervisor">Supervisor</option>
+                                <option value="admin">Admin</option>
+                                <option value="hr">HR</option>
+                                <option value="executive">Executive</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Add User</button>
+                        <div id="userAddResult" class="mt-3"></div>
+                    </form>
+                </div>
+
+                <script src="javascripts/addUsers.js"></script>
             </div>
 
             <!-- Work Mode creation Page -->
@@ -186,7 +236,7 @@
                 </form>
 
                 <!-- Existing Work Modes Management -->
-                <div class="card p-4 mt-4">
+                <div class="p-4 mt-4">
                     <h4>Edit Existing Work Modes</h4>
                     <div id="existingWorkModesList" class="list-group"></div>
                 </div>
