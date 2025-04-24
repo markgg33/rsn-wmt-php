@@ -319,6 +319,7 @@ document.addEventListener("DOMContentLoaded", () => {
     .then((data) => {
       workModeData = data;
       populateWorkModes();
+      renderWorkModes(data);
     })
     .catch((error) => {
       console.error("Error loading work modes:", error);
@@ -341,10 +342,10 @@ function resetTaskLog() {
 }
 
 // ============================================
-// ======== LOADING OVERLAY SCRIPT ==========
+// ======== LOADING OVERLAY SCRIPT DUPLICATION ==========
 // ============================================
 
-if (slidDistance >= maxSlide * 0.9) {
+/*if (slidDistance >= maxSlide * 0.9) {
   // Show full loading overlay
   document.getElementById("loadingOverlay").style.display = "flex";
 
@@ -354,17 +355,11 @@ if (slidDistance >= maxSlide * 0.9) {
     handle.style.left = "0";
     handle.textContent = "▶ Slide to Tag";
   }, 1500);
-}
+}*/
 
 // ================================
-// LOAD EXISTING WORK MODES
+// RENDER WORK MODES
 // ================================
-/*document.addEventListener("DOMContentLoaded", function () {
-    fetch('get_work_modes.php')
-      .then(res => res.json())
-      .then(data => renderWorkModes(data))
-      .catch(err => console.error("Failed to fetch modes:", err));
-  });*/
 
 function renderWorkModes(data) {
   const container = document.getElementById("existingWorkModesList");
