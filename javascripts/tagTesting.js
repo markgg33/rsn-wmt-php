@@ -52,7 +52,7 @@ function calculateTimeSpent(start, end) {
 // ========== LOCAL STORAGE UTILITIES =========
 // ============================================
 
-function saveLogToLocalStorage() {
+/*function saveLogToLocalStorage() {
   const rows = [...document.querySelectorAll("#wmtLogTable tbody tr")];
   const data = rows.map((row) =>
     [...row.cells].map((cell) => cell.textContent)
@@ -72,13 +72,13 @@ function loadLogFromLocalStorage() {
     rowData.forEach((cellText) => (row.insertCell().textContent = cellText));
     lastTaskRow = row;
   });
-}
+}*/
 
 // ============================================
 // ========== TASK LOGGING FUNCTION ===========
 // ============================================
 
-function startTask() {
+/*function startTask() {
   const taskDescription = document.getElementById("taskSelector").value;
   const workMode = document.getElementById("workModeSelector").value;
 
@@ -128,6 +128,86 @@ function startTask() {
   lastTaskRow = newRow;
 
   saveLogToLocalStorage();
+  document.getElementById("taskSelector").value = "";
+}*/
+
+function startTask() {
+  const taskDescription = document.getElementById("taskSelector").value;
+  const workMode = document.getElementById("workModeSelector").value;
+
+  if (!taskDescription) {
+    alert("Please select a task.");
+    return;
+  }
+
+  if (!lastTaskRow && taskDescription.includes("End Shift")) {
+    alert("You haven't started any task yet.");
+    return;
+  }
+
+  if (lastTaskRow && lastTaskRow.cells[2].textContent === taskDescription) {
+    alert("You're already on this task.");
+    return;
+  }
+
+  const now = new Date();
+  const timeString = formatTime(now);
+  const dateString = formatDate(now);
+
+  const tableBody = document
+    .getElementById("wmtLogTable")
+    .getElementsByTagName("tbody")[0];
+
+  if (lastTaskRow) {
+    const startTime = lastTaskRow.cells[3].textContent;
+    const endTime = timeString;
+
+    if (startTime && endTime) {
+      lastTaskRow.cells[4].textContent = endTime;
+      lastTaskRow.cells[5].textContent = calculateTimeSpent(startTime, endTime);
+      lastTaskRow.classList.remove("active-task");
+
+      // Update last task's end time and duration in DB
+      const prevTaskId = lastTaskRow.dataset.taskId;
+      fetch("update_task_log.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: prevTaskId,
+          end_time: endTime,
+          duration: calculateTimeSpent(startTime, endTime),
+        }),
+      });
+    }
+  }
+
+  const newRow = tableBody.insertRow();
+  newRow.insertCell(0).textContent = dateString;
+  newRow.insertCell(1).textContent = workMode;
+  newRow.insertCell(2).textContent = taskDescription;
+  newRow.insertCell(3).textContent = timeString;
+  newRow.insertCell(4).textContent = "";
+  newRow.insertCell(5).textContent = "";
+
+  newRow.classList.add("active-task");
+  lastTaskRow = newRow;
+
+  // Save to DB
+  fetch("insert_task_log.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      work_mode: workMode,
+      task_description: taskDescription,
+      date: dateString,
+      start_time: timeString,
+    }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      newRow.dataset.taskId = data.inserted_id;
+    });
+
   document.getElementById("taskSelector").value = "";
 }
 
@@ -232,7 +312,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Load logs and modes
-  loadLogFromLocalStorage();
+  // loadLogFromLocalStorage();
 
   fetch("get_work_modes.php")
     .then((response) => response.json())
@@ -276,33 +356,37 @@ if (slidDistance >= maxSlide * 0.9) {
   }, 1500);
 }
 
- // ================================
-  // LOAD EXISTING WORK MODES
-  // ================================
-  /*document.addEventListener("DOMContentLoaded", function () {
+// ================================
+// LOAD EXISTING WORK MODES
+// ================================
+/*document.addEventListener("DOMContentLoaded", function () {
     fetch('get_work_modes.php')
       .then(res => res.json())
       .then(data => renderWorkModes(data))
       .catch(err => console.error("Failed to fetch modes:", err));
   });*/
 
-  function renderWorkModes(data) {
-    const container = document.getElementById("existingWorkModesList");
-    container.innerHTML = "";
+function renderWorkModes(data) {
+  const container = document.getElementById("existingWorkModesList");
+  container.innerHTML = "";
 
-    Object.entries(data).forEach(([mode, tasks]) => {
-      const wrapper = document.createElement("div");
-      wrapper.className = "list-group-item";
+  Object.entries(data).forEach(([mode, tasks]) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "list-group-item";
 
-      wrapper.innerHTML = `
+    wrapper.innerHTML = `
         <strong>${mode}</strong>
         <ul class="mt-2">
-          ${tasks.map((task, idx) => `
+          ${tasks
+            .map(
+              (task, idx) => `
             <li class="mb-1 d-flex align-items-center gap-2">
               <input type="text" class="form-control form-control-sm flex-grow-1" value="${task}" data-mode="${mode}" data-index="${idx}">
               <button class="btn btn-danger btn-sm" onclick="deleteTask('${mode}', ${idx})">Delete</button>
             </li>
-          `).join('')}
+          `
+            )
+            .join("")}
         </ul>
         <div class="d-flex justify-content-end mt-2 gap-2">
           <button class="btn btn-primary btn-sm" onclick="updateTasks('${mode}')">Update</button>
@@ -310,62 +394,63 @@ if (slidDistance >= maxSlide * 0.9) {
         </div>
       `;
 
-      container.appendChild(wrapper);
-    });
-  }
+    container.appendChild(wrapper);
+  });
+}
 
-  // ================================
-  // UPDATE WORK MODE TASKS
-  // ================================
-  function updateTasks(mode) {
-    const inputs = document.querySelectorAll(`input[data-mode="${mode}"]`);
-    const updatedTasks = Array.from(inputs).map(i => i.value.trim()).filter(t => t !== "");
+// ================================
+// UPDATE WORK MODE TASKS
+// ================================
+function updateTasks(mode) {
+  const inputs = document.querySelectorAll(`input[data-mode="${mode}"]`);
+  const updatedTasks = Array.from(inputs)
+    .map((i) => i.value.trim())
+    .filter((t) => t !== "");
 
-    fetch('update_work_mode.php', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ mode, tasks: updatedTasks })
-    })
-    .then(res => res.text())
-    .then(msg => {
+  fetch("update_work_mode.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mode, tasks: updatedTasks }),
+  })
+    .then((res) => res.text())
+    .then((msg) => {
       alert("Updated successfully!");
       location.reload();
     })
-    .catch(err => {
+    .catch((err) => {
       console.error(err);
       alert("Failed to update.");
     });
-  }
+}
 
-  // ================================
-  // DELETE TASK FROM A MODE
-  // ================================
-  function deleteTask(mode, index) {
-    if (!confirm("Delete this task?")) return;
+// ================================
+// DELETE TASK FROM A MODE
+// ================================
+function deleteTask(mode, index) {
+  if (!confirm("Delete this task?")) return;
 
-    fetch('delete_task.php', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ mode, index })
-    })
-    .then(res => res.text())
-    .then(msg => location.reload())
-    .catch(err => console.error(err));
-  }
+  fetch("delete_task.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mode, index }),
+  })
+    .then((res) => res.text())
+    .then((msg) => location.reload())
+    .catch((err) => console.error(err));
+}
 
-  // ================================
-  // DELETE AN ENTIRE WORK MODE
-  // ================================
-  function deleteWorkMode(mode) {
-    if (!confirm("Delete the entire work mode?")) return;
+// ================================
+// DELETE AN ENTIRE WORK MODE
+// ================================
+function deleteWorkMode(mode) {
+  if (!confirm("Delete the entire work mode?")) return;
 
-    fetch('delete_work_mode.php', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ mode })
-    })
-    .then(res => res.text())
-    .then(msg => location.reload())
-    .catch(err => console.error(err));
-  }
-
+  fetch("delete_work_mode.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mode }),
+  })
+    .then((res) => res.text())
+    .then((msg) => location.reload())
+    .catch((err) => console.error(err));
+}

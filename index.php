@@ -16,13 +16,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
     <script src="javascripts/sidebar.js"></script>
     <!----AOS LIBRARY---->
+    <link rel="stylesheet" href="css/index.css">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 </head>
 
 <body>
     <div class="container d-flex justify-content-center align-items-center vh-100">
-        <div class="card p-4 shadow" style="min-width: 350px;">
-            <h3 class="text-center mb-3">Login</h3>
+        <div class="card p-4 shadow" data-aos="fade-up">
+            <div class="image-center">
+                <img src="images/RESONO_logo.png" alt="" width="100px">
+            </div>
+            <br>
             <form id="loginForm">
                 <!-- Email -->
                 <div class="mb-3">
@@ -39,24 +43,39 @@
                 <!-- Password -->
                 <div class="mb-3">
                     <label for="password" class="form-label">Password</label>
-                    <input
-                        type="password"
-                        class="form-control"
-                        id="password"
-                        name="password"
-                        placeholder="Enter your password"
-                        required />
-                </div>
+                    <div class="input-group">
+                        <input
+                            type="password"
+                            class="form-control"
+                            id="password"
+                            name="password"
+                            placeholder="Enter your password"
+                            required />
+                        <span class="input-group-text toggle-password" onclick="togglePassword('password')">
+                            <i class="fa-solid fa-eye"></i>
+                        </span>
+                    </div>
 
+                </div>
                 <!-- Submit Button -->
-                <button type="submit" class="btn btn-primary w-100">Login</button>
+                <button type="submit" class="btn-login w-100">Login</button>
             </form>
 
             <div id="loginError" class="text-danger text-center mt-2" style="display: none;"></div>
         </div>
     </div>
 
+    <script src="javascripts/togglePassword.js"></script>
     <script src="javascripts/loginAJAX.js"></script>
+    <!-- AOS JS -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            offset: 100, // Start animation 100px before the section is in view
+            duration: 800, // Animation duration in milliseconds
+            easing: 'ease-in-out', // Smooth transition effect
+        });
+    </script>
 
 </body>
 

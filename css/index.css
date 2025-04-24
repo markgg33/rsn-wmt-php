@@ -1,0 +1,24 @@
+.card{
+    background-color: rgb(68, 67, 67);
+    color: white;
+    min-width: 350px;
+}
+
+.image-center{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.btn-login{
+    border: none;
+    border-radius: 5px;
+    background-color: #106b04;
+    padding: 10px;
+    color: white;
+    transition: background-color 100ms;
+}
+
+.btn-login:hover{
+    background-color: #189407;
+}

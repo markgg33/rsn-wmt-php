@@ -248,15 +248,27 @@ $userType = $_SESSION['user_type'];
             <!-- Monthly Summary Page APRIL 21, 2025-->
 
             <div id="monthlySummary-page" class="page-content">
-                <div class="main-title">
+                <div class="main-title d-flex justify-content-between align-items-center">
                     <h1>MONTHLY SUMMARY</h1>
+
+                    <!-- Month/Year Filter -->
+                    <div class="d-flex gap-2">
+                        <input type="month" id="monthSelector" class="form-control w-auto" />
+                        <select id="userSelector" class="form-select w-auto d-none">
+                            <!-- For Admins only: filled by JS -->
+                        </select>
+                        <button class="btn btn-primary" onclick="loadMonthlySummary()">Load Summary</button>
+                    </div>
                 </div>
-                <br>
-                <!-- Monthly summary table -->
+
+                <br />
+
+                <!-- Summary Table -->
                 <div class="table-responsive">
-                    <table class="table table-bordered text-center" id="">
+                    <table class="table table-bordered text-center" id="monthlySummaryTable">
                         <thead class="table-dark">
                             <tr>
+                                <th>Date</th>
                                 <th>Login @</th>
                                 <th>Logout @</th>
                                 <th>Total Time</th>
@@ -270,13 +282,13 @@ $userType = $_SESSION['user_type'];
                                 <th>System Down</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <!-- Task rows go here dynamically -->
-                        </tbody>
+                        <tbody></tbody>
                     </table>
                 </div>
+                <script src="javascripts/monthlySummary.js"></script>
             </div>
-        </div>
+
+        </div><!-- MAIN CONTAINER ENDS -->
 
     </div>
 
