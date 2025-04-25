@@ -21,8 +21,15 @@ function formatTime(date) {
   });
 }
 
-function formatDate(date) {
+function formatDateForDisplay(date) {
   return date.toLocaleDateString("en-GB");
+}
+
+function formatDateForDatabase(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function calculateTimeSpent(start, end) {
@@ -140,19 +147,41 @@ function startTask() {
     return;
   }
 
-  if (!lastTaskRow && taskDescription.includes("End Shift")) {
+  /*------------------------------------------------------------- */
+
+  /*if (!lastTaskRow && taskDescription.includes("End Shift")) {
     alert("You haven't started any task yet.");
+    return;
+  }*/
+
+  if (taskDescription.includes("End Shift") && !lastTaskRow) {
+    alert("You must start a task before ending your shift.");
     return;
   }
 
-  if (lastTaskRow && lastTaskRow.cells[2].textContent === taskDescription) {
+  /*------------------------------------------------------------- */
+
+  /*if (lastTaskRow && lastTaskRow.cells[2].textContent === taskDescription) {
+    alert("You're already on this task.");
+    return;
+  }*/
+
+  if (
+    lastTaskRow &&
+    lastTaskRow.cells[2].textContent === taskDescription &&
+    !lastTaskRow.cells[4].textContent &&
+    !taskDescription.includes("End Shift") // allow End Shift tagging
+  ) {
     alert("You're already on this task.");
     return;
   }
 
+    /*------------------------------------------------------------- */
+
   const now = new Date();
   const timeString = formatTime(now);
-  const dateString = formatDate(now);
+  const dateString = formatDateForDisplay(now); // For UI
+  const dbDate = formatDateForDatabase(now); // For DB
 
   const tableBody = document
     .getElementById("wmtLogTable")
@@ -192,6 +221,13 @@ function startTask() {
   newRow.classList.add("active-task");
   lastTaskRow = newRow;
 
+  console.log("Tagging task with:", {
+    work_mode: workMode,
+    task_description: taskDescription,
+    date: dateString,
+    start_time: timeString,
+  });
+
   // Save to DB
   fetch("insert_task_log.php", {
     method: "POST",
@@ -199,13 +235,22 @@ function startTask() {
     body: JSON.stringify({
       work_mode: workMode,
       task_description: taskDescription,
-      date: dateString,
+      date: dbDate,
       start_time: timeString,
     }),
   })
     .then((res) => res.json())
     .then((data) => {
-      newRow.dataset.taskId = data.inserted_id;
+      if (data.status === "success") {
+        newRow.dataset.taskId = data.inserted_id;
+      } else {
+        alert("Error saving task: " + data.message);
+        console.error("Insert error:", data);
+      }
+    })
+    .catch((err) => {
+      alert("Request failed while saving task.");
+      console.error("Insert error:", err);
     });
 
   document.getElementById("taskSelector").value = "";
@@ -313,6 +358,37 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Load logs and modes
   // loadLogFromLocalStorage();
+
+  // ============================================
+  // ======== LOAD TAGS FOR USERS ==========
+  // ============================================
+
+  loadExistingLogs(); //Dynamic fetching of Logs depending on the user
+
+  function loadExistingLogs() {
+    fetch("get_user_task_logs.php")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status === "success") {
+          const tableBody = document.querySelector("#wmtLogTable tbody");
+          tableBody.innerHTML = "";
+          data.logs.forEach((log) => {
+            const row = tableBody.insertRow();
+            row.insertCell(0).textContent = formatDateForDisplay(
+              new Date(log.date)
+            );
+            row.insertCell(1).textContent = log.work_mode;
+            row.insertCell(2).textContent = log.task_description;
+            row.insertCell(3).textContent = log.start_time;
+            row.insertCell(4).textContent = log.end_time || "";
+            row.insertCell(5).textContent = log.total_duration || "";
+          });
+        } else {
+          console.error("Failed to load logs:", data.message);
+        }
+      })
+      .catch((err) => console.error("Fetch error:", err));
+  }
 
   fetch("get_work_modes.php")
     .then((response) => response.json())

@@ -1,4 +1,5 @@
 <?php
+
 session_start();
 if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_type'], ['admin', 'executive', 'hr'])) {
     header("Location: login.php");
@@ -29,6 +30,11 @@ $userType = $_SESSION['user_type'];
     <script src="javascripts/sidebar.js"></script>
     <!----AOS LIBRARY---->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script>
+        sessionStorage.setItem("user_id", "<?php echo $_SESSION['user_id']; ?>");
+        sessionStorage.setItem("user_type", "<?php echo $_SESSION['user_type']; ?>");
+    </script>
+
 </head>
 
 <body>
@@ -130,10 +136,10 @@ $userType = $_SESSION['user_type'];
                                     <!-- Task rows go here dynamically -->
                                 </tbody>
                             </table>
-                            <button class="btn btn-danger mb-2" onclick="resetTaskLog()">Reset Table</button>
+                            <!---button class="btn btn-danger mb-2" onclick="resetTaskLog()">Reset Table</button---CAN BE USE FOR TESTING PURPOSES--->
                         </div>
                         <!-- JavaScript for logic -->
-                        <script src="javascripts/tagTesting.js"></script>
+                        <script src="javascripts/tagTask.js"></script>
                     </div>
                 </div>
                 <br>
@@ -251,13 +257,11 @@ $userType = $_SESSION['user_type'];
                 <div class="main-title d-flex justify-content-between align-items-center">
                     <h1>MONTHLY SUMMARY</h1>
 
-                    <!-- Month/Year Filter -->
-                    <div class="d-flex gap-2">
+                    <div class="d-flex align-items-center gap-2">
                         <input type="month" id="monthSelector" class="form-control w-auto" />
-                        <select id="userSelector" class="form-select w-auto d-none">
-                            <!-- For Admins only: filled by JS -->
+                        <select id="userFilterDropdown" class="form-select w-auto">
+                            <option value="">-- Select User --</option>
                         </select>
-                        <button class="btn btn-primary" onclick="loadMonthlySummary()">Load Summary</button>
                     </div>
                 </div>
 

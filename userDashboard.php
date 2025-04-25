@@ -127,10 +127,10 @@ $userType = $_SESSION['user_type'];
                                     <!-- Task rows go here dynamically -->
                                 </tbody>
                             </table>
-                            <button class="btn btn-danger mb-2" onclick="resetTaskLog()">Reset Table</button>
+                            <!---button class="btn btn-danger mb-2" onclick="resetTaskLog()">Reset Table</button---CAN BE USE FOR TESTING PURPOSES--->
                         </div>
                         <!-- JavaScript for logic -->
-                        <script src="javascripts/tagTesting.js"></script>
+                        <script src="javascripts/tagTask.js"></script>
                     </div>
                 </div>
                 <br>
@@ -281,6 +281,7 @@ $userType = $_SESSION['user_type'];
                         </thead>
                         <tbody></tbody>
                     </table>
+                    <script src="javascripts/monthlySummary.js"></script>
                 </div>
             </div>
 
