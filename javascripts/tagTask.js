@@ -147,47 +147,23 @@ function startTask() {
     return;
   }
 
-  /*------------------------------------------------------------- */
-
-  /*if (!lastTaskRow && taskDescription.includes("End Shift")) {
-    alert("You haven't started any task yet.");
-    return;
-  }*/
-
+  // Block if trying to tag End Shift without any prior task
   if (taskDescription.includes("End Shift") && !lastTaskRow) {
     alert("You must start a task before ending your shift.");
     return;
   }
 
-  /*------------------------------------------------------------- */
-
-  /*if (lastTaskRow && lastTaskRow.cells[2].textContent === taskDescription) {
-    alert("You're already on this task.");
-    return;
-  }*/
-
-  if (
-    lastTaskRow &&
-    lastTaskRow.cells[2].textContent === taskDescription &&
-    !lastTaskRow.cells[4].textContent &&
-    !taskDescription.includes("End Shift") // allow End Shift tagging
-  ) {
-    alert("You're already on this task.");
-    return;
-  }
-
-    /*------------------------------------------------------------- */
-
   const now = new Date();
   const timeString = formatTime(now);
-  const dateString = formatDateForDisplay(now); // For UI
-  const dbDate = formatDateForDatabase(now); // For DB
+  const dateString = formatDateForDisplay(now);
+  const dbDate = formatDateForDatabase(now);
 
   const tableBody = document
     .getElementById("wmtLogTable")
-    .getElementsByTagName("tbody")[0];
+    .querySelector("tbody");
 
-  if (lastTaskRow) {
+  // ✅ If last task exists and NOT an End Shift
+  if (lastTaskRow && !lastTaskRow.cells[2].textContent.includes("End Shift")) {
     const startTime = lastTaskRow.cells[3].textContent;
     const endTime = timeString;
 
@@ -196,7 +172,7 @@ function startTask() {
       lastTaskRow.cells[5].textContent = calculateTimeSpent(startTime, endTime);
       lastTaskRow.classList.remove("active-task");
 
-      // Update last task's end time and duration in DB
+      // Update last task in database
       const prevTaskId = lastTaskRow.dataset.taskId;
       fetch("update_task_log.php", {
         method: "POST",
@@ -206,11 +182,15 @@ function startTask() {
           end_time: endTime,
           duration: calculateTimeSpent(startTime, endTime),
         }),
+      }).catch((err) => {
+        console.error("Error updating previous task:", err);
       });
     }
   }
 
+  // ✅ Now create a fresh new task
   const newRow = tableBody.insertRow();
+
   newRow.insertCell(0).textContent = dateString;
   newRow.insertCell(1).textContent = workMode;
   newRow.insertCell(2).textContent = taskDescription;
@@ -219,7 +199,6 @@ function startTask() {
   newRow.insertCell(5).textContent = "";
 
   newRow.classList.add("active-task");
-  lastTaskRow = newRow;
 
   console.log("Tagging task with:", {
     work_mode: workMode,
@@ -228,7 +207,7 @@ function startTask() {
     start_time: timeString,
   });
 
-  // Save to DB
+  // Save new task to DB
   fetch("insert_task_log.php", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -245,13 +224,18 @@ function startTask() {
         newRow.dataset.taskId = data.inserted_id;
       } else {
         alert("Error saving task: " + data.message);
-        console.error("Insert error:", data);
       }
     })
     .catch((err) => {
-      alert("Request failed while saving task.");
       console.error("Insert error:", err);
     });
+
+  // ✅ MOST IMPORTANT: If the new task is "End Shift", reset `lastTaskRow`
+  if (taskDescription.includes("End Shift")) {
+    lastTaskRow = null;
+  } else {
+    lastTaskRow = newRow;
+  }
 
   document.getElementById("taskSelector").value = "";
 }
@@ -372,6 +356,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (data.status === "success") {
           const tableBody = document.querySelector("#wmtLogTable tbody");
           tableBody.innerHTML = "";
+
           data.logs.forEach((log) => {
             const row = tableBody.insertRow();
             row.insertCell(0).textContent = formatDateForDisplay(
@@ -379,9 +364,23 @@ document.addEventListener("DOMContentLoaded", () => {
             );
             row.insertCell(1).textContent = log.work_mode;
             row.insertCell(2).textContent = log.task_description;
-            row.insertCell(3).textContent = log.start_time;
-            row.insertCell(4).textContent = log.end_time || "";
-            row.insertCell(5).textContent = log.total_duration || "";
+            row.insertCell(3).textContent = formatToHHMM(log.start_time);
+            row.insertCell(4).textContent = log.end_time
+              ? formatToHHMM(log.end_time)
+              : "";
+            row.insertCell(5).textContent = formatToHHMM(log.total_duration) || "";
+
+            // Attach task ID to each row (so update_task_log knows what to update)
+            row.dataset.taskId = log.id;
+
+            // AFTER loading the logs: set lastTaskRow
+            const rows = document.querySelectorAll("#wmtLogTable tbody tr");
+            rows.forEach((row) => {
+              if (!row.cells[4].textContent) {
+                lastTaskRow = row;
+                row.classList.add("active-task");
+              }
+            });
           });
         } else {
           console.error("Failed to load logs:", data.message);
@@ -401,6 +400,12 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Error loading work modes:", error);
     });
 });
+
+//Helper for format
+function formatToHHMM(timeStr) {
+  if (!timeStr) return "";
+  return timeStr.slice(0, 5); // From '13:24:00' ➔ '13:24'
+}
 
 // ============================================
 // ======== RESET TABLE INTERACTION ==========

@@ -15,7 +15,7 @@ $query = "SELECT tl.id, tl.date, wm.name AS work_mode, td.description AS task_de
           JOIN work_modes wm ON wm.id = tl.work_mode_id
           JOIN task_descriptions td ON td.id = tl.task_description_id
           WHERE tl.user_id = ?
-          ORDER BY tl.date DESC, tl.start_time ASC";
+          ORDER BY tl.date ASC, tl.start_time ASC";
 
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $user_id);
