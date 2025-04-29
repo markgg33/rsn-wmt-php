@@ -56,6 +56,7 @@ $userType = $_SESSION['user_type'];
                     <ul class="collapse sidebar-submenu list-unstyled ps-3" id="generalSubmenu">
                         <li class="sidebar-list-item" data-page="dashboard" onclick="changePage('dashboard')">Dashboard</li>
                         <li class="sidebar-list-item" data-page="monthlySummary" onclick="changePage('monthlySummary')">Monthly Summary</li>
+                        <li class="sidebar-list-item" data-page="payslips" onclick="changePage('payslips')">View Payslips</li>
                         <li class="sidebar-list-item" data-page="calendar" onclick="changePage('calendar')">Calendar</li>
                     </ul>
                 </li>
@@ -251,9 +252,6 @@ $userType = $_SESSION['user_type'];
                     <!-- Month/Year Filter -->
                     <div class="d-flex gap-2">
                         <input type="month" id="monthSelector" class="form-control w-auto" />
-                        <select id="userSelector" class="form-select w-auto d-none">
-                            <!-- For Admins only: filled by JS -->
-                        </select>
                         <button class="btn btn-primary" onclick="loadMonthlySummary()">Load Summary</button>
                     </div>
                 </div>
@@ -261,6 +259,7 @@ $userType = $_SESSION['user_type'];
                 <br />
 
                 <!-- Summary Table -->
+
                 <div class="table-responsive">
                     <table class="table table-bordered text-center" id="monthlySummaryTable">
                         <thead class="table-dark">
@@ -285,18 +284,22 @@ $userType = $_SESSION['user_type'];
                 </div>
             </div>
 
+            <div id="payslips-page" class="page-content">
+                <div class="main-title">
+                    <h1>PAYSLIPS</h1>
+                </div>
+            </div>
+
+        </div><!-- MAIN CONTAINER -->
+
+
+        <!-- LOADING OVERLAY -->
+        <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+            <div class="loading-spinner">
+                <div class="spinner-border text-light" role="status"></div>
+                <p class="mt-2 text-white">Tagging task...</p>
+            </div>
         </div>
-
-    </div>
-
-
-    <!-- LOADING OVERLAY -->
-    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
-        <div class="loading-spinner">
-            <div class="spinner-border text-light" role="status"></div>
-            <p class="mt-2 text-white">Tagging task...</p>
-        </div>
-    </div>
 
     </div>
 

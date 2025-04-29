@@ -62,6 +62,7 @@ $userType = $_SESSION['user_type'];
                         <li class="sidebar-list-item" data-page="dashboard" onclick="changePage('dashboard')">Dashboard</li>
                         <li class="sidebar-list-item" data-page="monthlySummary" onclick="changePage('monthlySummary')">Monthly Summary</li>
                         <li class="sidebar-list-item" data-page="calendar" onclick="changePage('calendar')">Calendar</li>
+                        <li class="sidebar-list-item" data-page="uploadFiles" onclick="changePage('uploadFiles')">Upload Files</li>
                     </ul>
                 </li>
 
@@ -73,7 +74,7 @@ $userType = $_SESSION['user_type'];
                     </a>
 
                     <ul class="collapse sidebar-submenu list-unstyled ps-3" id="systemSettingsmenu">
-                        <li class="sidebar-list-item" data-page="ipRestrictions" onclick="changePage('ipRestrictions')">IP Restrictions</li>
+
                         <li class="sidebar-list-item" data-page="addUsers" onclick="changePage('addUsers')">Add Users</li>
                         <li class="sidebar-list-item" data-page="workModeCreation" onclick="changePage('workModeCreation')">Work Mode Creation</li>
                         <li class="sidebar-list-item" data-page="billing" onclick="changePage('billing')">Billing</li>
@@ -259,7 +260,7 @@ $userType = $_SESSION['user_type'];
 
                     <div class="d-flex align-items-center gap-2">
                         <input type="month" id="monthSelector" class="form-control w-auto" />
-                        <select id="userFilterDropdown" class="form-select w-auto">
+                        <select id="userSelector" class="form-select w-auto">
                             <option value="">-- Select User --</option>
                         </select>
                     </div>
@@ -268,6 +269,7 @@ $userType = $_SESSION['user_type'];
                 <br />
 
                 <!-- Summary Table -->
+
                 <div class="table-responsive">
                     <table class="table table-bordered text-center" id="monthlySummaryTable">
                         <thead class="table-dark">
@@ -290,6 +292,14 @@ $userType = $_SESSION['user_type'];
                     </table>
                 </div>
                 <script src="javascripts/monthlySummary.js"></script>
+
+            </div>
+
+            <div id="uploadFiles-page" class="page-content">
+                <div class="main-title">
+                    <h1>UPLOAD FILES</h1>
+                </div>
+                <br>
             </div>
 
         </div><!-- MAIN CONTAINER ENDS -->

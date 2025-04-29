@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("🔍 User ID:", userId);
 
   const monthSelector = document.getElementById("monthSelector");
-  const userDropdown = document.getElementById("userFilterDropdown");
+  const userDropdown = document.getElementById("userSelector");
 
   if (monthSelector) {
     const now = new Date();
