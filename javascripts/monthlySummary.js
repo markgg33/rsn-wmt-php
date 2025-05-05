@@ -185,15 +185,19 @@ document.getElementById("userSelector").addEventListener("change", function () {
   const selectedUserId = this.value;
   const summaryContainer = document.getElementById("summaryContainer");
   const summaryTableBody = document.querySelector("#monthlySummaryTable tbody");
+  const pdfButton = document.getElementById("summaryBtn");
 
   // Hide table and clear data if no user is selected
   if (!selectedUserId) {
     summaryContainer.style.display = "none";
+    pdfButton.style.display = "none";
     summaryTableBody.innerHTML = ""; // Clear previous data
+
     return;
   }
 
   // Show container and load summary if user selected
   summaryContainer.style.display = "block";
+  pdfButton.style.display = "block";
   loadMonthlySummary(); // Make sure this function exists and fetches the data
 });
