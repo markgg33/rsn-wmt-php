@@ -34,6 +34,8 @@ $userType = $_SESSION['user_type'];
 <body>
 
     <div class="grid-container">
+
+        <span id="loggedInUser" data-username="<?php echo $_SESSION['name']; ?>" hidden></span>
         <aside id="rsn-sidebar">
 
             <div class="logout-container">
@@ -280,8 +282,15 @@ $userType = $_SESSION['user_type'];
                         </thead>
                         <tbody></tbody>
                     </table>
-                    <script src="javascripts/monthlySummary.js"></script>
                 </div>
+                <button id="generatePdfBtnUsers" class="btn btn-success">Download Summary as PDF</button>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+                <!-- SCRIPTS FOR THE TABLE GENERATION -->
+                <script src="javascripts/monthlySummary.js"></script>
+                <script src="javascripts/generateForUsers.js"></script>
+
             </div>
 
             <div id="payslips-page" class="page-content">
@@ -314,7 +323,6 @@ $userType = $_SESSION['user_type'];
     </script>
 
     <script src="javascripts/addWorkMode.js"></script>
-
     <script>
         function confirmSaveWorkMode() {
             return confirm("Are you sure you want to save this Work Mode and its tasks?");
