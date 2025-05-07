@@ -222,6 +222,12 @@ function startTask() {
     .then((data) => {
       if (data.status === "success") {
         newRow.dataset.taskId = data.inserted_id;
+
+        // ✅ Real-time update for monthly summary
+        const selectedUser = document.getElementById("userSelector")?.value;
+        if (selectedUser) {
+          loadMonthlySummary(selectedUser);
+        }
       } else {
         alert("Error saving task: " + data.message);
       }
@@ -368,7 +374,8 @@ document.addEventListener("DOMContentLoaded", () => {
             row.insertCell(4).textContent = log.end_time
               ? formatToHHMM(log.end_time)
               : "";
-            row.insertCell(5).textContent = formatToHHMM(log.total_duration) || "";
+            row.insertCell(5).textContent =
+              formatToHHMM(log.total_duration) || "";
 
             // Attach task ID to each row (so update_task_log knows what to update)
             row.dataset.taskId = log.id;
