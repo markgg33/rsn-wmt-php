@@ -232,10 +232,28 @@ function startTask() {
       if (data.status === "success") {
         newRow.dataset.taskId = data.inserted_id;
 
-        // ✅ Real-time update for monthly summary
+        /* ✅ Real-time update for monthly summary
         const selectedUser = document.getElementById("userSelector")?.value;
         if (selectedUser) {
           loadMonthlySummary(selectedUser);
+        }
+      } else if (data.status === "error") {
+        alert("Error saving task: " + data.message);
+      }
+    })
+    .catch((err) => {
+      console.error("Insert error:", err);
+      alert("Something went wrong while tagging.");
+    });*/
+
+        // ✅ Real-time update for monthly summary
+        const selectedUser =
+          document.getElementById("userSelector") ?.value ||
+          sessionStorage.getItem("user_id");
+        const month = document.getElementById("monthSelector")?.value;
+
+        if (selectedUser && month) {
+          loadMonthlySummary(selectedUser, month); // Make sure this function exists globally
         }
       } else if (data.status === "error") {
         alert("Error saving task: " + data.message);

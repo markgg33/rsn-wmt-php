@@ -45,8 +45,15 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-function loadMonthlySummary(userId) {
-  const month = document.getElementById("monthSelector").value;
+
+//FUNCTION TO LOAD SUMMARY TABLE
+
+function loadMonthlySummary(userId, month = null) {
+  //const month = document.getElementById("monthSelector").value;
+
+  if (!month) {
+    month = document.getElementById("monthSelector")?.value;
+  }
 
   fetch(`get_monthly_summary.php?user_id=${userId}&month=${month}`)
     .then((res) => res.json())
@@ -105,6 +112,22 @@ function minutesToHHMM(totalMinutes) {
     2,
     "0"
   )}`;
+}
+
+//REFRESH BUTTON TO REFRESH THE SUMMARY TABLE
+
+function refreshSummary() {
+  const userId =
+    document.getElementById("userSelector")?.value ||
+    sessionStorage.getItem("user_id");
+  const month = document.getElementById("monthSelector")?.value;
+
+  if (!userId || !month) {
+    alert("Please select a user and a month to refresh.");
+    return;
+  }
+
+  loadMonthlySummary(userId, month);
 }
 
 //CODE FOR PDF GENERATION OF DTRs
@@ -179,19 +202,22 @@ document.getElementById("generatePdfBtn").addEventListener("click", () => {
   img.src = logoBase64;
 });
 
-//HIDING USER MAKING SELECT USER THE DEFAULT CHOICE
+//HIDING USER MAKING SELECT USER THE DEFAULT CHOICE and HIDING RELOAD BUTTON
 
 document.getElementById("userSelector").addEventListener("change", function () {
   const selectedUserId = this.value;
   const summaryContainer = document.getElementById("summaryContainer");
   const summaryTableBody = document.querySelector("#monthlySummaryTable tbody");
   const pdfButton = document.getElementById("summaryBtn");
+  const reloadButton = document.getElementById("refreshSummaryBtn");
 
   // Hide table and clear data if no user is selected
   if (!selectedUserId) {
     summaryContainer.style.display = "none";
     pdfButton.style.display = "none";
+    reloadButton.style.display = "none";
     summaryTableBody.innerHTML = ""; // Clear previous data
+
 
     return;
   }
@@ -199,5 +225,8 @@ document.getElementById("userSelector").addEventListener("change", function () {
   // Show container and load summary if user selected
   summaryContainer.style.display = "block";
   pdfButton.style.display = "block";
+  reloadButton.style.display = "block";
   loadMonthlySummary(); // Make sure this function exists and fetches the data
 });
+
+

@@ -294,6 +294,9 @@ $userType = $_SESSION['user_type'];
                 <div id="summaryBtn" style="display: none;">
                     <button id="generatePdfBtn" class="btn btn-success">Download Summary as PDF</button>
                 </div>
+                <div id="refreshSummaryBtn" style="display:none;" class="mt-2">
+                    <button class="btn btn-secondary" onclick="refreshSummary()">🔄 Reload Summary</button>
+                </div>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
                 <!-- SCRIPTS FOR THE TABLE GENERATION -->
