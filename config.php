@@ -1,9 +1,11 @@
 <?php
 
-ini_set('session.gc_maxlifetime', 86400);
-ini_set('session.cookie_lifetime', 86400);
-ini_set('session.gc_probability', 1);
-ini_set('session.gc_divisor', 100);
+session_name("WMT_SESSION");
+
+ini_set('session.gc_maxlifetime', 43200);
+ini_set('session.cookie_lifetime', 43200);
+//ini_set('session.gc_probability', 1);
+//ini_set('session.gc_divisor', 100);
 
 // Database connection
 session_start();

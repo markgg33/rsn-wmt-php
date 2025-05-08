@@ -1,5 +1,7 @@
 <?php
 
+require "config.php";
+
 if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_type'], ['user'])) {
     header("Location: login.php");
     exit;
