@@ -1,11 +1,19 @@
 <?php
 require 'config.php';
-session_start();
+
+/*if (!isset($_SESSION['user_id'])) {
+    echo json_encode(['status' => 'error', 'message' => 'Not logged in']);
+    exit;
+}*/
+
+header('Content-Type: application/json');
 
 if (!isset($_SESSION['user_id'])) {
+    http_response_code(401); // Unauthorized
     echo json_encode(['status' => 'error', 'message' => 'Not logged in']);
     exit;
 }
+
 
 $user_id = $_SESSION['user_id'];
 $data = json_decode(file_get_contents("php://input"), true);

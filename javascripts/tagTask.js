@@ -218,8 +218,17 @@ function startTask() {
       start_time: timeString,
     }),
   })
-    .then((res) => res.json())
+    .then((response) => {
+      if (response.status === 401) {
+        alert("Your session has expired. Please log in again.");
+        window.location.href = "index.php"; //redirects to index.php after being logged out
+        return;
+      }
+      return response.json();
+    })
     .then((data) => {
+      if (!data) return;
+
       if (data.status === "success") {
         newRow.dataset.taskId = data.inserted_id;
 
@@ -228,12 +237,13 @@ function startTask() {
         if (selectedUser) {
           loadMonthlySummary(selectedUser);
         }
-      } else {
+      } else if (data.status === "error") {
         alert("Error saving task: " + data.message);
       }
     })
     .catch((err) => {
       console.error("Insert error:", err);
+      alert("Something went wrong while tagging.");
     });
 
   // ✅ MOST IMPORTANT: If the new task is "End Shift", reset `lastTaskRow`

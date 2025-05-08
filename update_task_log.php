@@ -1,5 +1,13 @@
 <?php
 require 'config.php';
+header('Content-Type: application/json');
+
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401); // Unauthorized
+    echo json_encode(['status' => 'error', 'message' => 'Not logged in']);
+    exit;
+}
+
 $data = json_decode(file_get_contents("php://input"), true);
 
 $id = $data['id'];

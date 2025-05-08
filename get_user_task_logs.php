@@ -1,9 +1,16 @@
 <?php
-session_start();
+
 require 'config.php';
 
-if (!isset($_SESSION['user_id'])) {
+/*if (!isset($_SESSION['user_id'])) {
     echo json_encode(['status' => 'error', 'message' => 'User not logged in']);
+    exit;
+}*/
+header('Content-Type: application/json');
+
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401); // Unauthorized
+    echo json_encode(['status' => 'error', 'message' => 'Session expired']);
     exit;
 }
 

@@ -1,6 +1,6 @@
 <?php
 
-session_start();
+require "config.php";
 if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_type'], ['admin', 'executive', 'hr'])) {
     header("Location: login.php");
     exit;

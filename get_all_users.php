@@ -1,15 +1,17 @@
 <?php
 require 'config.php';
 
-session_start();
 header('Content-Type: application/json');
+
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401); // Unauthorized
+    echo json_encode(['status' => 'error', 'message' => 'Not logged in']);
+    exit;
+}
 
 // DEBUG
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-
-
-header('Content-Type: application/json');
 
 $query = "SELECT id, name FROM users WHERE user_type IN ('user', 'hr', 'executive', 'admin')";
 $result = $conn->query($query);
