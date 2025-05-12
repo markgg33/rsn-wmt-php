@@ -166,7 +166,7 @@ $query = "
     DATE(date) AS log_date,
     MIN(start_time) AS login_time,
     MAX(end_time) AS logout_time,
-    SUM(TIME_TO_SEC(total_duration)) AS total_time_in_seconds,
+    IFNULL(SUM(TIME_TO_SEC(total_duration)), 0) AS total_time_in_seconds,
     SUM(CASE 
         WHEN td.description NOT LIKE '%Break%'
          AND td.description NOT LIKE '%Offphone%'
@@ -175,7 +175,7 @@ $query = "
          AND td.description NOT LIKE '%Personal%'
          AND td.description NOT LIKE '%System Down%'
          AND td.description NOT LIKE '%End Shift%'
-            THEN TIME_TO_SEC(tl.total_duration)
+             THEN IFNULL(TIME_TO_SEC(tl.total_duration), 0)
         ELSE 0
     END) AS production,
     SUM(CASE WHEN td.description LIKE 'Offphone%' THEN TIME_TO_SEC(tl.total_duration) ELSE 0 END) AS offphone,
