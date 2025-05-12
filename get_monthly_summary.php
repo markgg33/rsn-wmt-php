@@ -166,7 +166,7 @@ $query = "
     DATE(date) AS log_date,
     MIN(start_time) AS login_time,
     MAX(end_time) AS logout_time,
-    IFNULL(SUM(TIME_TO_SEC(total_duration)), 0) AS total_time_in_seconds,
+    IFNULL(SUM(TIME_TO_SEC(total_duration)), 0) AS total_time_in_seconds, 
     SUM(CASE 
         WHEN td.description NOT LIKE '%Break%'
          AND td.description NOT LIKE '%Offphone%'
