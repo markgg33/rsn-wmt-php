@@ -130,6 +130,19 @@ function refreshSummary() {
   loadMonthlySummary(userId, month);
 }
 
+// REFRESH BUTTON FOR REGULAR USERS (no userSelector needed)
+function refreshUserSummary() {
+  const userId = sessionStorage.getItem("user_id");
+  const month = document.getElementById("monthSelector")?.value;
+
+  if (!userId || !month) {
+    alert("Please select a month to refresh.");
+    return;
+  }
+
+  loadMonthlySummary(userId, month);
+}
+
 //CODE FOR PDF GENERATION OF DTRs
 
 document.getElementById("generatePdfBtn").addEventListener("click", () => {

@@ -166,17 +166,17 @@ $query = "
     DATE(date) AS log_date,
     MIN(start_time) AS login_time,
     MAX(end_time) AS logout_time,
-    IFNULL(SUM(TIME_TO_SEC(total_duration)), 0) AS total_time_in_seconds, 
+    SUM(TIME_TO_SEC(IFNULL(tl.total_duration, '00:00:00'))) AS total_time_in_seconds,
     SUM(CASE 
-        WHEN td.description NOT LIKE '%Break%'
-         AND td.description NOT LIKE '%Offphone%'
-         AND td.description NOT LIKE '%Training%'
-         AND td.description NOT LIKE '%Resono%'
-         AND td.description NOT LIKE '%Personal%'
-         AND td.description NOT LIKE '%System Down%'
-         AND td.description NOT LIKE '%End Shift%'
-             THEN IFNULL(TIME_TO_SEC(tl.total_duration), 0)
-        ELSE 0
+    WHEN td.description NOT LIKE '%Break%'
+     AND td.description NOT LIKE '%Offphone%'
+     AND td.description NOT LIKE '%Training%'
+     AND td.description NOT LIKE '%Resono%'
+     AND td.description NOT LIKE '%Personal%'
+     AND td.description NOT LIKE '%System Down%'
+     AND td.description NOT LIKE '%End Shift%'
+        THEN TIME_TO_SEC(IFNULL(tl.total_duration, '00:00:00'))
+    ELSE 0
     END) AS production,
     SUM(CASE WHEN td.description LIKE 'Offphone%' THEN TIME_TO_SEC(tl.total_duration) ELSE 0 END) AS offphone,
     SUM(CASE WHEN td.description LIKE 'Training%' THEN TIME_TO_SEC(tl.total_duration) ELSE 0 END) AS training,
@@ -227,19 +227,20 @@ while ($row = $result->fetch_assoc()) {
         $prod_final = $production_seconds;
     }
 
+    // Use the helper function to format time correctly for each summary
     $summary[] = [
         "date" => date("d/m/Y", strtotime($row["log_date"])),
         "login" => $row["login_time"],
         "logout" => $row["logout_time"],
-        "total_time" => gmdate("H:i", $row["total_time_in_seconds"]),
-        "production" => gmdate("H:i", $prod_final),
-        "offphone" => gmdate("H:i", $row["offphone"]),
-        "training" => gmdate("H:i", $row["training"]),
-        "resono_function" => gmdate("H:i", $row["resono"]),
-        "paid_break" => gmdate("H:i", $paid_break),
-        "unpaid_break" => gmdate("H:i", $unpaid_break),
-        "personal_time" => gmdate("H:i", $row["personal_time"]),
-        "system_down" => gmdate("H:i", $row["system_down"]),
+        "total_time" => secondsToTime($row["total_time_in_seconds"] - $paid_break - $unpaid_break),
+        "production" => secondsToTime($prod_final),
+        "offphone" => secondsToTime($row["offphone"]),
+        "training" => secondsToTime($row["training"]),
+        "resono_function" => secondsToTime($row["resono"]),
+        "paid_break" => secondsToTime($paid_break),
+        "unpaid_break" => secondsToTime($unpaid_break),
+        "personal_time" => secondsToTime($row["personal_time"]),
+        "system_down" => secondsToTime($row["system_down"]),
     ];
 
     // MTD SUM
@@ -260,17 +261,16 @@ $summary[] = [
     "date" => "MTD TOTAL",
     "login" => "",
     "logout" => "",
-    "total_time" => gmdate("H:i", $total_total_time),
-    "production" => gmdate("H:i", $total_production),
-    "offphone" => gmdate("H:i", $total_offphone),
-    "training" => gmdate("H:i", $total_training),
-    "resono_function" => gmdate("H:i", $total_resono),
-    "paid_break" => gmdate("H:i", $total_paid),
-    "unpaid_break" => gmdate("H:i", $total_unpaid),
-    "personal_time" => gmdate("H:i", $total_personal),
-    "system_down" => gmdate("H:i", $total_down),
+    "total_time" => secondsToTime($total_total_time - $total_paid - $total_unpaid),
+    "production" => secondsToTime($total_production),
+    "offphone" => secondsToTime($total_offphone),
+    "training" => secondsToTime($total_training),
+    "resono_function" => secondsToTime($total_resono),
+    "paid_break" => secondsToTime($total_paid),
+    "unpaid_break" => secondsToTime($total_unpaid),
+    "personal_time" => secondsToTime($total_personal),
+    "system_down" => secondsToTime($total_down),
 ];
-
 
 echo json_encode(["status" => "success", "data" => $summary]);
 
