@@ -1,4 +1,5 @@
 <?php
+
 require 'config.php'; // mysqli connection
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -19,7 +20,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Store user session
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_type'] = $user['user_type'];
-            $_SESSION['name'] = $user['name'];
+            $_SESSION['name'] = $user['first_name'] . ' ' .
+                ($user['middle_name'] ? $user['middle_name'] . ' ' : '') .
+                $user['last_name'];
 
             // Update login status
             $update = $conn->prepare("UPDATE users SET is_online = 1, is_logged_in = 1 WHERE id = ?");

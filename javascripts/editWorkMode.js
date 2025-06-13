@@ -179,7 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
     container.appendChild(editorArea);
 
     dropdown.addEventListener("change", () => {
-      const selected = dropdown.value;
+      const selected = dropdown.value.trim();
       if (selected) {
         renderEditor(selected, workModes[selected]);
       } else {

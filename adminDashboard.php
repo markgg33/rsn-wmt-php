@@ -1,6 +1,7 @@
 <?php
 
 require "config.php";
+
 if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_type'], ['admin', 'executive', 'hr'])) {
     header("Location: login.php");
     exit;
@@ -27,14 +28,13 @@ $userType = $_SESSION['user_type'];
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <script>
+        sessionStorage.setItem('user_type', '<?= $_SESSION['user_type'] ?>');
+        sessionStorage.setItem('user_id', '<?= $_SESSION['user_id'] ?>');
+    </script>
     <script src="javascripts/sidebar.js"></script>
     <!----AOS LIBRARY---->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <script>
-        sessionStorage.setItem("user_id", "<?php echo $_SESSION['user_id']; ?>");
-        sessionStorage.setItem("user_type", "<?php echo $_SESSION['user_type']; ?>");
-    </script>
-
 </head>
 
 <body>
@@ -46,9 +46,8 @@ $userType = $_SESSION['user_type'];
                 <img src="images/RESONO_logo.png" width="100px" alt="">
                 <a href="logout.php" onclick="return confirm('Are you sure you want to log out?')"><button class="btn-logout"><i class="fa-solid fa-power-off"></i></button></a>
                 <br>
-                <p>Welcome, <?php
-                            echo isset($_SESSION['name']) ? htmlspecialchars($_SESSION['name']) : 'Guest';
-                            ?></p>
+                <p>Welcome, <?= isset($_SESSION['name']) ? htmlspecialchars($_SESSION['name']) : 'Guest'; ?></p>
+
             </div>
 
             <ul class="sidebar-list" data-aos="fade-right">
@@ -61,8 +60,8 @@ $userType = $_SESSION['user_type'];
                     <ul class="collapse sidebar-submenu list-unstyled ps-3" id="generalSubmenu">
                         <li class="sidebar-list-item" data-page="dashboard" onclick="changePage('dashboard')">Dashboard</li>
                         <li class="sidebar-list-item" data-page="monthlySummary" onclick="changePage('monthlySummary')">Monthly Summary</li>
-                        <li class="sidebar-list-item" data-page="calendar" onclick="changePage('calendar')">Calendar</li>
                         <li class="sidebar-list-item" data-page="uploadFiles" onclick="changePage('uploadFiles')">Upload Files</li>
+                        <li class="sidebar-list-item" data-page="editWMT" onclick="changePage('editWMT')">Edit WMT</li>
                     </ul>
                 </li>
 
@@ -76,9 +75,10 @@ $userType = $_SESSION['user_type'];
                     <ul class="collapse sidebar-submenu list-unstyled ps-3" id="systemSettingsmenu">
 
                         <li class="sidebar-list-item" data-page="addUsers" onclick="changePage('addUsers')">Add Users</li>
-                        <li class="sidebar-list-item" data-page="workModeCreation" onclick="changePage('workModeCreation')">Work Mode Creation</li>
+                        <li class="sidebar-list-item" data-page="workModeCreation" onclick="changePage('workModeCreation')">Work Mode Management</li>
+                        <li class="sidebar-list-item" data-page="employees" onclick="changePage('employees')">Employees</li>
                         <li class="sidebar-list-item" data-page="billing" onclick="changePage('billing')">Billing</li>
-                        <li class="sidebar-list-item" data-page="changePass" onclick="changePage('changePass')">Change Password</li>
+                        <li class="sidebar-list-item" data-page="editProfile" onclick="changePage('editProfile')">Edit Profile</li>
                     </ul>
                 </li>
                 <!----SYSTEM SETTINGS END---->
@@ -114,6 +114,7 @@ $userType = $_SESSION['user_type'];
                                 <option value="">-- Select Task --</option>
                                 <!-- Task options will be populated based on selected Work Mode -->
                             </select>
+                            <br>
 
                             <div id="slideButtonWrapper" class="slide-button-wrapper">
                                 <div class="slide-button-handle" id="slideButtonHandle">▶ Slide to Tag</div>
@@ -131,6 +132,8 @@ $userType = $_SESSION['user_type'];
                                         <th>Start Time</th>
                                         <th>End Time</th>
                                         <th>Total Time Spent</th>
+                                        <th>Remarks</th>
+                                        <th>Edit Time</th> <!-- New -->
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -139,11 +142,46 @@ $userType = $_SESSION['user_type'];
                             </table>
                             <!---button class="btn btn-danger mb-2" onclick="resetTaskLog()">Reset Table</button---CAN BE USE FOR TESTING PURPOSES--->
                         </div>
-                        <!-- JavaScript for logic -->
-                        <script src="javascripts/tagTask.js"></script>
                     </div>
                 </div>
                 <br>
+            </div>
+
+            <!--Edit user tagging -->
+            <div id="editWMT-page" class="page-content">
+                <div class="main-title">
+                    <h1>EDIT WORK MODE TRACKERS</h1>
+                </div>
+
+                <!-- Search bar with input group -->
+                <div class="input-group mb-3" style="max-width: 600px;">
+                    <input type="text" class="form-control" id="searchUserInput" placeholder="Search by name or email">
+                    <button class="btn btn-success" type="button" id="searchUserBtn">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <button class="btn btn-danger" type="button" id="clearSelectedUserBtn" style="display: none;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div id="userResults" class="mb-3"></div>
+                <div id="selectedUserInfo" class="fw-bold mb-2"></div>
+
+                <table class="table table-bordered" id="taskLogsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Work Mode</th>
+                            <th>Task Description</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Total Duration</th>
+                            <th>Remarks</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="taskLogsBody"></tbody>
+                </table>
             </div>
 
             <!--Add users Page-->
@@ -152,11 +190,34 @@ $userType = $_SESSION['user_type'];
                 <div class="card p-4 mt-4">
                     <h4>Add New User</h4>
                     <form id="addUserForm">
-                        <div class="mb-3">
-                            <label for="name" class="form-label">Full Name</label>
-                            <input type="text" class="form-control" id="name" name="name" required />
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="first_name" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" required />
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="middle_name" class="form-label">Middle Name (optional)</label>
+                                <input type="text" class="form-control" id="middle_name" name="middle_name" />
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="last_name" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" required />
+                            </div>
                         </div>
 
+                        <div class="mb-3">
+                            <label for="department" class="form-label">Department</label>
+                            <select class="form-select" id="department" name="department" required>
+                                <option value="">Select Department</option>
+                                <option value="Web Team">Web Team</option>
+                                <option value="Ancilliary Team">Ancilliary Team</option>
+                                <option value="Fraud Team">Fraud Team</option>
+                                <option value="Nectar Team">Nectar Team</option>
+                                <option value="Executives">Executives</option>
+                            </select>
+                        </div>
+
+                        <!-- Email, Password, and User Role remain the same -->
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
                             <input type="email" class="form-control" id="email" name="email" required />
@@ -164,7 +225,18 @@ $userType = $_SESSION['user_type'];
 
                         <div class="mb-3">
                             <label for="password" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="password" name="password" required />
+                            <div class="input-group">
+                                <input
+                                    type="password"
+                                    class="form-control"
+                                    id="password"
+                                    name="password"
+                                    placeholder="Enter password"
+                                    required />
+                                <span class="input-group-text toggle-password" onclick="togglePassword('password')">
+                                    <i class="fa-solid fa-eye" id="eye-password"></i>
+                                </span>
+                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -172,14 +244,13 @@ $userType = $_SESSION['user_type'];
                             <select class="form-select" id="user_type" name="user_type" required>
                                 <option value="">Select Role</option>
                                 <option value="user">User</option>
-                                <option value="supervisor">Supervisor</option>
                                 <option value="admin">Admin</option>
                                 <option value="hr">HR</option>
                                 <option value="executive">Executive</option>
                             </select>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">Add User</button>
+                        <button type="submit" class="btn btn-success">Add User</button>
                         <div id="userAddResult" class="mt-3"></div>
                     </form>
                 </div>
@@ -191,7 +262,7 @@ $userType = $_SESSION['user_type'];
             <div id="workModeCreation-page" class="page-content">
 
                 <div class="main-title">
-                    <h1>WORK MODE CREATION</h1>
+                    <h1>WORK MODE MANAGEMENT</h1>
                 </div>
                 <br>
 
@@ -247,9 +318,6 @@ $userType = $_SESSION['user_type'];
                     <h4>Edit Existing Work Modes</h4>
                     <div id="existingWorkModesList" class="list-group"></div>
                 </div>
-
-                <script src="javascripts/editWorkMode.js"></script>
-
             </div>
 
             <!-- Monthly Summary Page APRIL 21, 2025-->
@@ -299,29 +367,44 @@ $userType = $_SESSION['user_type'];
                 </div>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-                <!-- SCRIPTS FOR THE TABLE GENERATION -->
-                <script src="javascripts/monthlySummary.js"></script>
             </div>
 
-            <div id="uploadFiles-page" class="page-content">
+            <!-- EMPLOYEES PAGE -->
+            <div id="employees-page" class="page-content" style="display:none;">
                 <div class="main-title">
-                    <h1>UPLOAD FILES</h1>
+                    <h1>EMPLOYEES</h1>
                 </div>
-                <br>
+
+                <div id="employeeContainer" class="mt-3">
+                    <!-- Employee list will be rendered here -->
+                </div>
             </div>
+
 
         </div><!-- MAIN CONTAINER ENDS -->
 
     </div>
 
-
-    <!-- LOADING OVERLAY -->
-    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
-        <div class="loading-spinner">
-            <div class="spinner-border text-light" role="status"></div>
-            <p class="mt-2 text-white">Tagging task...</p>
+    <!-- Global Loading Overlay -->
+    <div id="globalOverlay" style="
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    font-family: Arial, sans-serif;
+">
+        <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">Loading...</span>
         </div>
+        <div style="margin-top: 10px;">Please wait...</div>
     </div>
+
 
     </div>
 
@@ -334,8 +417,18 @@ $userType = $_SESSION['user_type'];
             easing: 'ease-in-out', // Smooth transition effect
         });
     </script>
-
+    <!-- JavaScript for logic -->
+    <script src="javascripts/loadingOverlay.js"></script>
+    <script src="javascripts/tagTask.js"></script>
+    <script src="javascripts/editWMT.js"></script>
     <script src="javascripts/addWorkMode.js"></script>
+    <script src="javascripts/togglePassword.js"></script>
+    <script src="javascripts/editWorkMode.js"></script>
+    <script src="javascripts/employees.js"></script>
+
+
+    <!-- SCRIPTS FOR THE TABLE GENERATION -->
+    <script src="javascripts/monthlySummary.js"></script>
 
     <script>
         function confirmSaveWorkMode() {

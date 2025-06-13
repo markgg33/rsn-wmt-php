@@ -1,11 +1,5 @@
 <?php
 require 'config.php';
-
-/*if (!isset($_SESSION['user_id'])) {
-    echo json_encode(['status' => 'error', 'message' => 'Not logged in']);
-    exit;
-}*/
-
 header('Content-Type: application/json');
 
 if (!isset($_SESSION['user_id'])) {
@@ -14,7 +8,6 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-
 $user_id = $_SESSION['user_id'];
 $data = json_decode(file_get_contents("php://input"), true);
 
@@ -22,6 +15,8 @@ $modeName = $data['work_mode'];
 $taskDescription = $data['task_description'];
 $date = $data['date'];
 $start = $data['start_time'];
+$remarks = $data['remarks'] ?? null;
+$update_id = $data['update_id'] ?? null;
 
 // Get work_mode_id
 $modeQuery = $conn->prepare("SELECT id FROM work_modes WHERE name = ?");
@@ -49,9 +44,25 @@ if (!$taskRow) {
 }
 $task_description_id = $taskRow['id'];
 
-// Insert into task_logs
-$stmt = $conn->prepare("INSERT INTO task_logs (user_id, work_mode_id, task_description_id, date, start_time) VALUES (?, ?, ?, ?, ?)");
-$stmt->bind_param("iiiss", $user_id, $work_mode_id, $task_description_id, $date, $start);
-$stmt->execute();
+if ($update_id) {
+    // ✅ UPDATE existing remarks
+    $stmt = $conn->prepare("UPDATE task_logs SET remarks = ? WHERE id = ? AND user_id = ?");
+    $stmt->bind_param("sii", $remarks, $update_id, $user_id);
 
-echo json_encode(['status' => 'success', 'inserted_id' => $stmt->insert_id]);
+    if ($stmt->execute()) {
+        echo json_encode(['status' => 'success', 'message' => 'Remarks updated']);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Failed to update remarks']);
+    }
+} else {
+    // ✅ INSERT new log
+    $stmt = $conn->prepare("INSERT INTO task_logs (user_id, work_mode_id, task_description_id, date, start_time, remarks) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("iiisss", $user_id, $work_mode_id, $task_description_id, $date, $start, $remarks);
+    
+    if ($stmt->execute()) {
+        echo json_encode(['status' => 'success', 'inserted_id' => $stmt->insert_id]);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Failed to insert task log']);
+    }
+}
+?>

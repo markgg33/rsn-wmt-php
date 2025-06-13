@@ -6,7 +6,6 @@ let lastTaskRow = null;
 let workModeData = {};
 let isSliding = false;
 let startX = 0;
-let hasMoved = false;
 let currentX = 0;
 
 // ============================================
@@ -33,535 +32,456 @@ function formatDateForDatabase(date) {
 }
 
 function calculateTimeSpent(start, end) {
-  const [startHours, startMinutes] = start.split(":").map(Number);
-  const [endHours, endMinutes] = end.split(":").map(Number);
-
-  const startDate = new Date();
-  startDate.setHours(startHours, startMinutes, 0);
-
-  const endDate = new Date();
-  endDate.setHours(endHours, endMinutes, 0);
-
-  let diffMs = endDate - startDate;
-  if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000;
-
-  const diffMinutes = Math.floor(diffMs / 60000);
-  const hours = Math.floor(diffMinutes / 60);
-  const minutes = diffMinutes % 60;
-
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
-    2,
-    "0"
-  )}`;
+  const [sH, sM] = start.split(":").map(Number);
+  const [eH, eM] = end.split(":").map(Number);
+  const s = new Date(),
+    e = new Date();
+  s.setHours(sH, sM);
+  e.setHours(eH, eM);
+  let diff = e - s;
+  if (diff < 0) diff += 24 * 60 * 60 * 1000;
+  const mins = Math.floor(diff / 60000);
+  return `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(
+    mins % 60
+  ).padStart(2, "0")}`;
 }
 
 // ============================================
-// ========== LOCAL STORAGE UTILITIES =========
+// ========== MAIN TASK TAGGING LOGIC =========
 // ============================================
-
-/*function saveLogToLocalStorage() {
-  const rows = [...document.querySelectorAll("#wmtLogTable tbody tr")];
-  const data = rows.map((row) =>
-    [...row.cells].map((cell) => cell.textContent)
-  );
-  localStorage.setItem("wmtLogData", JSON.stringify(data));
-}
-
-function loadLogFromLocalStorage() {
-  const data = JSON.parse(localStorage.getItem("wmtLogData"));
-  if (!data) return;
-
-  const tableBody = document.querySelector("#wmtLogTable tbody");
-  tableBody.innerHTML = "";
-
-  data.forEach((rowData) => {
-    const row = tableBody.insertRow();
-    rowData.forEach((cellText) => (row.insertCell().textContent = cellText));
-    lastTaskRow = row;
-  });
-}*/
-
-// ============================================
-// ========== TASK LOGGING FUNCTION ===========
-// ============================================
-
-/*function startTask() {
-  const taskDescription = document.getElementById("taskSelector").value;
-  const workMode = document.getElementById("workModeSelector").value;
-
-  if (!taskDescription) {
-    alert("Please select a task.");
-    return;
-  }
-
-  if (!lastTaskRow && taskDescription.includes("End Shift")) {
-    alert("You haven't started any task yet.");
-    return;
-  }
-
-  if (lastTaskRow && lastTaskRow.cells[2].textContent === taskDescription) {
-    alert("You're already on this task.");
-    return;
-  }
-
-  const now = new Date();
-  const timeString = formatTime(now);
-  const dateString = formatDate(now);
-
-  const tableBody = document
-    .getElementById("wmtLogTable")
-    .getElementsByTagName("tbody")[0];
-
-  if (lastTaskRow) {
-    const startTime = lastTaskRow.cells[3].textContent;
-    const endTime = timeString;
-
-    if (startTime && endTime) {
-      lastTaskRow.cells[4].textContent = endTime;
-      lastTaskRow.cells[5].textContent = calculateTimeSpent(startTime, endTime);
-      lastTaskRow.classList.remove("active-task");
-    }
-  }
-
-  const newRow = tableBody.insertRow();
-  newRow.insertCell(0).textContent = dateString;
-  newRow.insertCell(1).textContent = workMode;
-  newRow.insertCell(2).textContent = taskDescription;
-  newRow.insertCell(3).textContent = timeString;
-  newRow.insertCell(4).textContent = "";
-  newRow.insertCell(5).textContent = "";
-
-  newRow.classList.add("active-task");
-  lastTaskRow = newRow;
-
-  saveLogToLocalStorage();
-  document.getElementById("taskSelector").value = "";
-}*/
 
 function startTask() {
-  const taskDescription = document.getElementById("taskSelector").value;
-  const workMode = document.getElementById("workModeSelector").value;
-
-  if (!taskDescription) {
-    alert("Please select a task.");
-    return;
-  }
-
-  // Block if trying to tag End Shift without any prior task
-  if (taskDescription.includes("End Shift") && !lastTaskRow) {
-    alert("You must start a task before ending your shift.");
-    return;
-  }
+  const task = document.getElementById("taskSelector").value;
+  const mode = document.getElementById("workModeSelector").value;
+  if (!task) return alert("Please select a task.");
+  if (task.includes("End Shift") && !lastTaskRow)
+    return alert("You must start a task before ending your shift.");
 
   const now = new Date();
-  const timeString = formatTime(now);
-  const dateString = formatDateForDisplay(now);
+  const startT = formatTime(now);
+  const dateStr = formatDateForDisplay(now);
   const dbDate = formatDateForDatabase(now);
+  const user =
+    document.getElementById("userSelector")?.value ||
+    sessionStorage.getItem("user_id");
+  const tableBody = document.querySelector("#wmtLogTable tbody");
 
-  const tableBody = document
-    .getElementById("wmtLogTable")
-    .querySelector("tbody");
-
-  // ✅ If last task exists and NOT an End Shift
   if (lastTaskRow && !lastTaskRow.cells[2].textContent.includes("End Shift")) {
-    const startTime = lastTaskRow.cells[3].textContent;
-    const endTime = timeString;
-
-    if (startTime && endTime) {
-      lastTaskRow.cells[4].textContent = endTime;
-      lastTaskRow.cells[5].textContent = calculateTimeSpent(startTime, endTime);
+    const s = lastTaskRow.cells[3].textContent;
+    const e = startT;
+    if (s && e) {
+      const dur = calculateTimeSpent(s, e);
+      lastTaskRow.cells[4].textContent = e;
+      lastTaskRow.cells[5].textContent = dur;
       lastTaskRow.classList.remove("active-task");
-
-      // Update last task in database
-      const prevTaskId = lastTaskRow.dataset.taskId;
       fetch("update_task_log.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: prevTaskId,
-          end_time: endTime,
-          duration: calculateTimeSpent(startTime, endTime),
+          id: lastTaskRow.dataset.taskId,
+          end_time: e,
+          duration: dur,
         }),
-      }).catch((err) => {
-        console.error("Error updating previous task:", err);
-      });
+      }).catch((err) => console.error("Error updating prev task:", err));
     }
   }
 
-  // ✅ Now create a fresh new task
-  const newRow = tableBody.insertRow();
+  const remarks = document.getElementById("remarksInput")?.value || "";
+  const newRow = document.createElement("tr");
+  newRow.innerHTML = `
+  <td>${dateStr}</td>
+  <td>${mode}</td>
+  <td>${task}</td>
+  <td>${startT}</td>
+  <td>--</td>
+  <td>--</td>
+`;
 
-  newRow.insertCell(0).textContent = dateString;
-  newRow.insertCell(1).textContent = workMode;
-  newRow.insertCell(2).textContent = taskDescription;
-  newRow.insertCell(3).textContent = timeString;
-  newRow.insertCell(4).textContent = "";
-  newRow.insertCell(5).textContent = "";
-
+  tableBody.appendChild(newRow);
   newRow.classList.add("active-task");
 
-  console.log("Tagging task with:", {
-    work_mode: workMode,
-    task_description: taskDescription,
-    date: dateString,
-    start_time: timeString,
-  });
-
-  // Save new task to DB
-  fetch("insert_task_log.php", {
+  fetch("insert_task_logs.php", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      work_mode: workMode,
-      task_description: taskDescription,
+      user_id: user,
+      work_mode: mode,
+      task_description: task,
       date: dbDate,
-      start_time: timeString,
+      start_time: startT,
+      remarks,
     }),
   })
-    .then((response) => {
-      if (response.status === 401) {
-        alert("Your session has expired. Please log in again.");
-        window.location.href = "index.php"; //redirects to index.php after being logged out
+    .then((res) => {
+      if (res.status === 401) {
+        alert("Session expired. Redirecting...");
+        window.location.href = "index.php";
         return;
       }
-      return response.json();
+      return res.json();
     })
     .then((data) => {
       if (!data) return;
-
       if (data.status === "success") {
+        if (data.updated_previous) {
+          const prevEndTime = data.updated_previous.end_time;
+          const prevID = data.updated_previous.id;
+          const prevEndInput = document.getElementById(`end_${prevID}`);
+          if (prevEndInput) {
+            prevEndInput.value = prevEndTime;
+          }
+        }
         newRow.dataset.taskId = data.inserted_id;
+        addRemarksCell(newRow, data.inserted_id, remarks);
 
-        /* ✅ Real-time update for monthly summary
-        const selectedUser = document.getElementById("userSelector")?.value;
-        if (selectedUser) {
-          loadMonthlySummary(selectedUser);
+        // Fill in end time of the previous task (if exists)
+        if (lastTaskRow) {
+          const lastEndInput = lastTaskRow.querySelector('input[id^="end_"]');
+          if (lastEndInput) {
+            const now = new Date();
+            const formatted = now.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            });
+            lastEndInput.value = formatted;
+          }
         }
-      } else if (data.status === "error") {
-        alert("Error saving task: " + data.message);
-      }
-    })
-    .catch((err) => {
-      console.error("Insert error:", err);
-      alert("Something went wrong while tagging.");
-    });*/
 
-        // ✅ Real-time update for monthly summary
-        const selectedUser =
-          document.getElementById("userSelector") ?.value ||
-          sessionStorage.getItem("user_id");
+        const userType = sessionStorage.getItem("user_type");
+        if (["admin", "hr", "executive"].includes(userType)) {
+          const cell = newRow.insertCell(7);
+          const sID = `start_${data.inserted_id}`;
+          const eID = `end_${data.inserted_id}`;
+          const btnID = `saveTime_${data.inserted_id}`;
+          cell.innerHTML = `
+    <div class="d-flex align-items-center gap-2">
+      <input type="time" class="form-control form-control-sm" style="width: 110px;" id="${sID}" value="${startT}" />
+      <input type="time" class="form-control form-control-sm" style="width: 110px;" id="${eID}" value="" />
+      <button class="btn btn-sm btn-success" id="${btnID}">Save</button>
+    </div>
+  `;
+
+          document.getElementById(btnID).addEventListener("click", () => {
+            const startInput = document.getElementById(sID);
+            const endInput = document.getElementById(eID);
+            fetch("update_task_log.php", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                id: data.inserted_id,
+                start_time: startInput.value,
+                end_time: endInput.value,
+                duration: calculateTimeSpent(startInput.value, endInput.value),
+              }),
+            })
+              .then((r) => r.json())
+              .then((resp) =>
+                alert(
+                  resp.status === "success" ? "Time updated!" : "Update failed."
+                )
+              )
+              .catch((err) => console.error("Error saving times:", err));
+          });
+        }
+
         const month = document.getElementById("monthSelector")?.value;
-
-        if (selectedUser && month) {
-          loadMonthlySummary(selectedUser, month); // Make sure this function exists globally
-        }
-      } else if (data.status === "error") {
-        alert("Error saving task: " + data.message);
+        if (user && month) loadMonthlySummary(user, month);
+      } else {
+        alert("Error: " + data.message);
       }
     })
     .catch((err) => {
       console.error("Insert error:", err);
-      alert("Something went wrong while tagging.");
+      alert("Error tagging task.");
     });
 
-  // ✅ MOST IMPORTANT: If the new task is "End Shift", reset `lastTaskRow`
-  if (taskDescription.includes("End Shift")) {
-    lastTaskRow = null;
-  } else {
-    lastTaskRow = newRow;
-  }
-
+  lastTaskRow = task.includes("End Shift") ? null : newRow;
   document.getElementById("taskSelector").value = "";
 }
 
-// ============================================
-// ======== TASK DROPDOWN UPDATER =============
-// ============================================
-
-function updateTaskOptions() {
-  const workMode = document.getElementById("workModeSelector").value;
-  const taskSelector = document.getElementById("taskSelector");
-
-  taskSelector.innerHTML = '<option value="">-- Select Task --</option>';
-
-  const tasks = workModeData[workMode];
-  if (tasks) {
-    tasks.forEach((task) => {
-      const option = document.createElement("option");
-      option.value = task;
-      option.textContent = task;
-      taskSelector.appendChild(option);
-    });
-  }
-}
-
-// ============================================
-// ======= WORK MODE DROPDOWN LOADER ==========
-// ============================================
-
-function populateWorkModes() {
-  const selector = document.getElementById("workModeSelector");
-  Object.keys(workModeData).forEach((mode) => {
-    const option = document.createElement("option");
-    option.value = mode;
-    option.textContent = mode;
-    selector.appendChild(option);
+function addRemarksCell(row, id, value) {
+  const cell = row.insertCell(6);
+  cell.className = "remarks-cell";
+  const inputId = `remarks_${id}`,
+    btnId = `saveRemarksBtn_${id}`;
+  cell.innerHTML = `
+    <div class="d-flex gap-1 align-items-center">
+      <input type="text" id="${inputId}" value="${value}" class="form-control form-control-sm" data-task-id="${id}" />
+      <button class="btn btn-sm btn-success" id="${btnId}">Save</button>
+    </div>
+  `;
+  document.getElementById(btnId).addEventListener("click", () => {
+    const input = document.getElementById(inputId);
+    fetch("update_task_remarks.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        task_id: input.dataset.taskId,
+        remarks: input.value,
+      }),
+    })
+      .then((r) => r.json())
+      .then((resp) =>
+        alert(resp.status === "success" ? "Remarks saved!" : "Save failed.")
+      )
+      .catch((err) => console.error("Error saving remarks:", err));
   });
 }
 
 // ============================================
-// ======== SLIDE TO TAG INTERACTION ==========
+// ========== LOAD & RENDER TASK LOGS =========
+// ============================================
+
+function loadExistingLogs() {
+  fetch("get_user_task_logs.php")
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.status !== "success") {
+        return console.error("Error loading logs:", data.message);
+      }
+
+      const tbody = document.querySelector("#wmtLogTable tbody");
+      tbody.innerHTML = "";
+
+      const userType = sessionStorage.getItem("user_type");
+
+      data.logs.forEach((log, index) => {
+        const row = tbody.insertRow();
+        row.dataset.taskId = log.id;
+
+        // Set class for the last (active) task
+        if (index === data.logs.length - 1 && !log.end_time) {
+          row.classList.add("active-task");
+          lastTaskRow = row;
+        }
+
+        row.insertCell(0).textContent = formatDateForDisplay(
+          new Date(log.date)
+        );
+        row.insertCell(1).textContent = log.work_mode;
+        row.insertCell(2).textContent = log.task_description;
+        row.insertCell(3).textContent = formatToHHMM(log.start_time);
+        row.insertCell(4).textContent = log.end_time
+          ? formatToHHMM(log.end_time)
+          : "--";
+        row.insertCell(5).textContent = log.total_duration
+          ? formatToHHMM(log.total_duration)
+          : "--";
+
+        // Add remarks input like startTask
+        addRemarksCell(row, log.id, log.remarks || "");
+
+        // Add admin controls if user is privileged
+        if (["admin", "hr", "executive"].includes(userType)) {
+          const cell = row.insertCell(7);
+          const sID = `start_${log.id}`;
+          const eID = `end_${log.id}`;
+          const btnID = `saveTime_${log.id}`;
+
+          if (log.task_description === "End Shift") {
+            cell.innerHTML = `
+      <div class="d-flex align-items-center gap-2">
+        <input type="time" class="form-control form-control-sm" style="width: 110px;" id="${sID}" value="${formatToHHMM(
+              log.start_time
+            )}" />
+        <span>(End time fixed)</span>
+        <button class="btn btn-sm btn-success" id="${btnID}">Save</button>
+      </div>
+    `;
+          } else {
+            cell.innerHTML = `
+      <div class="d-flex align-items-center gap-2">
+        <input type="time" class="form-control form-control-sm" style="width: 110px;" id="${sID}" value="${formatToHHMM(
+              log.start_time
+            )}" />
+        <input type="time" class="form-control form-control-sm" style="width: 110px;" id="${eID}" value="${
+              log.end_time ? formatToHHMM(log.end_time) : ""
+            }" />
+        <button class="btn btn-sm btn-success" id="${btnID}">Save</button>
+      </div>
+    `;
+          }
+
+          // Attach save event
+          document.getElementById(btnID)?.addEventListener("click", () => {
+            const newStart = document.getElementById(sID).value;
+            const newEnd =
+              log.task_description === "End Shift"
+                ? log.end_time
+                : document.getElementById(eID).value;
+
+            if (
+              !newStart ||
+              (!newEnd && log.task_description !== "End Shift")
+            ) {
+              return alert("Please fill in the time fields.");
+            }
+
+            const duration = newEnd
+              ? calculateTimeSpent(newStart, newEnd)
+              : null;
+
+            fetch("update_task_times.php", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                task_id: log.id,
+                start_time: newStart,
+                end_time: newEnd,
+                duration: duration,
+              }),
+            })
+              .then((r) => r.json())
+              .then((resp) => {
+                alert(
+                  resp.status === "success" ? "Time updated!" : "Update failed."
+                );
+                if (resp.status === "success") loadExistingLogs();
+              })
+              .catch((err) => console.error("Error saving time:", err));
+          });
+        }
+      });
+    });
+}
+
+// ============================================
+// ========== WORK MODE & SELECTORS ==========
+// ============================================
+
+function updateTaskOptions() {
+  const tasks =
+    workModeData[document.getElementById("workModeSelector").value] || [];
+  const select = document.getElementById("taskSelector");
+  select.innerHTML = '<option value="">-- Select Task --</option>';
+  tasks.forEach((t) => select.add(new Option(t, t)));
+}
+
+function populateWorkModes() {
+  const sel = document.getElementById("workModeSelector");
+  Object.keys(workModeData).forEach((m) => sel.add(new Option(m, m)));
+}
+
+// ============================================
+// ===== SLIDE-TO-TAG BUTTON INTERACTION ======
 // ============================================
 
 document.addEventListener("DOMContentLoaded", () => {
   const handle = document.getElementById("slideButtonHandle");
   const wrapper = document.getElementById("slideButtonWrapper");
-
   if (!handle || !wrapper) return;
 
-  // Mouse down - start sliding
   handle.addEventListener("mousedown", (e) => {
     isSliding = true;
     startX = e.clientX;
     currentX = startX;
-    document.body.style.userSelect = "none"; // Prevent text highlight
+    document.body.style.userSelect = "none";
     wrapper.style.cursor = "grabbing";
   });
 
-  // Track movement
   document.addEventListener("mousemove", (e) => {
     if (!isSliding) return;
     currentX = e.clientX;
-
-    let delta = currentX - startX;
     const maxSlide = wrapper.clientWidth - handle.clientWidth;
-
-    if (delta < 0) delta = 0;
-    if (delta > maxSlide) delta = maxSlide;
-
+    const delta = Math.min(maxSlide, Math.max(0, currentX - startX));
     handle.style.left = `${delta}px`;
   });
 
-  // Mouse up - check if slide was enough
   document.addEventListener("mouseup", () => {
     if (!isSliding) return;
-
     isSliding = false;
     document.body.style.userSelect = "";
     wrapper.style.cursor = "grab";
-
     const maxSlide = wrapper.clientWidth - handle.clientWidth;
-    const slidDistance = currentX - startX;
-
-    if (slidDistance >= maxSlide * 0.9) {
+    if (currentX - startX >= maxSlide * 0.9) {
       handle.textContent = "Tagging...";
-      handle.style.pointerEvents = "none";
-
-      // Show full loading overlay
-      document.getElementById("loadingOverlay").style.display = "flex";
-
+      document.getElementById("globalOverlay").style.display = "flex";
       setTimeout(() => {
-        startTask(); // Perform the task tagging
-        document.getElementById("loadingOverlay").style.display = "none"; // Hide overlay
-
-        // Reset slide handle
+        startTask();
+        document.getElementById("globalOverlay").style.display = "none";
         handle.style.left = "0";
         handle.textContent = "▶ Slide to Tag";
-        handle.style.pointerEvents = "auto";
-      }, 1500); // Delay gives time to show the spinner (you can adjust)
+      }, 1500);
     } else {
-      handle.style.left = "0"; // Reset slide handle if not fully slid
+      handle.style.left = "0";
     }
   });
 
-  // Load logs and modes
-  // loadLogFromLocalStorage();
-
-  // ============================================
-  // ======== LOAD TAGS FOR USERS ==========
-  // ============================================
-
-  loadExistingLogs(); //Dynamic fetching of Logs depending on the user
-
-  function loadExistingLogs() {
-    fetch("get_user_task_logs.php")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.status === "success") {
-          const tableBody = document.querySelector("#wmtLogTable tbody");
-          tableBody.innerHTML = "";
-
-          data.logs.forEach((log) => {
-            const row = tableBody.insertRow();
-            row.insertCell(0).textContent = formatDateForDisplay(
-              new Date(log.date)
-            );
-            row.insertCell(1).textContent = log.work_mode;
-            row.insertCell(2).textContent = log.task_description;
-            row.insertCell(3).textContent = formatToHHMM(log.start_time);
-            row.insertCell(4).textContent = log.end_time
-              ? formatToHHMM(log.end_time)
-              : "";
-            row.insertCell(5).textContent =
-              formatToHHMM(log.total_duration) || "";
-
-            // Attach task ID to each row (so update_task_log knows what to update)
-            row.dataset.taskId = log.id;
-
-            // AFTER loading the logs: set lastTaskRow
-            const rows = document.querySelectorAll("#wmtLogTable tbody tr");
-            rows.forEach((row) => {
-              if (!row.cells[4].textContent) {
-                lastTaskRow = row;
-                row.classList.add("active-task");
-              }
-            });
-          });
-        } else {
-          console.error("Failed to load logs:", data.message);
-        }
-      })
-      .catch((err) => console.error("Fetch error:", err));
-  }
-
+  loadExistingLogs();
   fetch("get_work_modes.php")
-    .then((response) => response.json())
+    .then((r) => r.json())
     .then((data) => {
       workModeData = data;
       populateWorkModes();
       renderWorkModes(data);
     })
-    .catch((error) => {
-      console.error("Error loading work modes:", error);
-    });
+    .catch((err) => console.error("Error loading modes:", err));
 });
 
-//Helper for format
-function formatToHHMM(timeStr) {
-  if (!timeStr) return "";
-  return timeStr.slice(0, 5); // From '13:24:00' ➔ '13:24'
+// ============================================
+// ========= SUPPORT UTILITIES ================
+// ============================================
+
+function formatToHHMM(t) {
+  return t ? t.slice(0, 5) : "";
 }
-
-// ============================================
-// ======== RESET TABLE INTERACTION ==========
-// ============================================
-
-function resetTaskLog() {
-  if (
-    confirm("Are you sure you want to clear all logs? This cannot be undone.")
-  ) {
-    localStorage.removeItem("wmtLogData"); // Clear localStorage
-    const tableBody = document.querySelector("#wmtLogTable tbody");
-    tableBody.innerHTML = ""; // Clear the table rows
-    lastTaskRow = null; // Reset the last tagged row
-  }
-}
-
-// ============================================
-// ======== LOADING OVERLAY SCRIPT DUPLICATION ==========
-// ============================================
-
-/*if (slidDistance >= maxSlide * 0.9) {
-  // Show full loading overlay
-  document.getElementById("loadingOverlay").style.display = "flex";
-
-  setTimeout(() => {
-    startTask(); // Tag only after delay
-    document.getElementById("loadingOverlay").style.display = "none";
-    handle.style.left = "0";
-    handle.textContent = "▶ Slide to Tag";
-  }, 1500);
-}*/
-
-// ================================
-// RENDER WORK MODES
-// ================================
 
 function renderWorkModes(data) {
   const container = document.getElementById("existingWorkModesList");
   container.innerHTML = "";
-
   Object.entries(data).forEach(([mode, tasks]) => {
-    const wrapper = document.createElement("div");
-    wrapper.className = "list-group-item";
-
-    wrapper.innerHTML = `
-        <strong>${mode}</strong>
-        <ul class="mt-2">
-          ${tasks
-            .map(
-              (task, idx) => `
-            <li class="mb-1 d-flex align-items-center gap-2">
-              <input type="text" class="form-control form-control-sm flex-grow-1" value="${task}" data-mode="${mode}" data-index="${idx}">
-              <button class="btn btn-danger btn-sm" onclick="deleteTask('${mode}', ${idx})">Delete</button>
-            </li>
-          `
-            )
-            .join("")}
-        </ul>
-        <div class="d-flex justify-content-end mt-2 gap-2">
-          <button class="btn btn-primary btn-sm" onclick="updateTasks('${mode}')">Update</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteWorkMode('${mode}')">Delete Mode</button>
-        </div>
-      `;
-
-    container.appendChild(wrapper);
+    const div = document.createElement("div");
+    div.className = "list-group-item";
+    div.innerHTML = `
+      <strong>${mode}</strong>
+      <ul>${tasks
+        .map(
+          (t, i) => `
+        <li class="d-flex gap-2">
+          <input class="form-control form-control-sm flex-grow-1" value="${t}" data-mode="${mode}" data-index="${i}" />
+          <button class="btn btn-danger btn-sm" onclick="deleteTask('${mode}',${i})">Delete</button>
+        </li>`
+        )
+        .join("")}
+      </ul>
+      <div class="d-flex gap-2 justify-content-end">
+        <button class="btn btn-primary btn-sm" onclick="updateTasks('${mode}')">Update</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteWorkMode('${mode}')">Delete Mode</button>
+      </div>`;
+    container.appendChild(div);
   });
 }
 
-// ================================
-// UPDATE WORK MODE TASKS
-// ================================
 function updateTasks(mode) {
-  const inputs = document.querySelectorAll(`input[data-mode="${mode}"]`);
-  const updatedTasks = Array.from(inputs)
+  const tasks = Array.from(
+    document.querySelectorAll(`input[data-mode="${mode}"]`)
+  )
     .map((i) => i.value.trim())
-    .filter((t) => t !== "");
-
+    .filter((v) => v);
   fetch("update_work_mode.php", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mode, tasks: updatedTasks }),
+    body: JSON.stringify({ mode, tasks }),
   })
-    .then((res) => res.text())
-    .then((msg) => {
-      alert("Updated successfully!");
-      location.reload();
-    })
-    .catch((err) => {
-      console.error(err);
-      alert("Failed to update.");
-    });
-}
-
-// ================================
-// DELETE TASK FROM A MODE
-// ================================
-function deleteTask(mode, index) {
-  if (!confirm("Delete this task?")) return;
-
-  fetch("delete_task.php", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mode, index }),
-  })
-    .then((res) => res.text())
-    .then((msg) => location.reload())
+    .then(() => location.reload())
     .catch((err) => console.error(err));
 }
 
-// ================================
-// DELETE AN ENTIRE WORK MODE
-// ================================
-function deleteWorkMode(mode) {
-  if (!confirm("Delete the entire work mode?")) return;
+function deleteTask(mode, idx) {
+  if (!confirm("Delete this task?")) return;
+  fetch("delete_task.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mode, index: idx }),
+  }).then(() => location.reload());
+}
 
+function deleteWorkMode(mode) {
+  if (!confirm("Delete entire mode?")) return;
   fetch("delete_work_mode.php", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ mode }),
-  })
-    .then((res) => res.text())
-    .then((msg) => location.reload())
-    .catch((err) => console.error(err));
+  }).then(() => location.reload());
 }

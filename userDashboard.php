@@ -126,6 +126,7 @@ $userType = $_SESSION['user_type'];
                                         <th>Start Time</th>
                                         <th>End Time</th>
                                         <th>Total Time Spent</th>
+                                        <th>Remarks</th>
                                     </tr>
                                 </thead>
                                 <tbody>

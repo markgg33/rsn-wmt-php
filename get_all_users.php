@@ -13,12 +13,13 @@ if (!isset($_SESSION['user_id'])) {
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-$query = "SELECT id, name FROM users WHERE user_type IN ('user', 'hr', 'executive', 'admin')";
+$query = "SELECT id, first_name, middle_name, last_name FROM users WHERE user_type IN ('user', 'hr', 'executive', 'admin')";
 $result = $conn->query($query);
 
 $users = [];
 if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
+        $row['name'] = trim($row['first_name'] . ' ' . $row['middle_name'] . ' ' . $row['last_name']);
         $users[] = $row;
     }
 }
